@@ -209,58 +209,70 @@ window.KazinoGames.start = () => {
   bj.dbl.onclick = bjDouble;
 
   /* ---------- slots ---------- */
-  // 絵柄ごとの設定。weight = リールに出やすさ（大きいほど出やすい）、
-  // three = 3つそろったときの倍率、two = 2つそろったときの倍率（0 なら配当なし）。
-  // 確率と払い戻し率は、この表から自動で計算して画面に出す。
+  // 絵柄
   const SLOT_SYMBOLS = [
-    { s: "🍒", name: "チェリー", weight: 32, three: 5, two: 1 },
-    { s: "🍋", name: "レモン", weight: 26, three: 10, two: 0 },
-    { s: "🔔", name: "ベル", weight: 18, three: 25, two: 0 },
-    { s: "⭐", name: "スター", weight: 12, three: 60, two: 0 },
-    { s: "💎", name: "ダイヤ", weight: 8, three: 150, two: 0 },
-    { s: "👑", name: "クラウン", weight: 4, three: 1000, two: 50 },
+    { s: "🍒", name: "チェリー" },
+    { s: "🍋", name: "レモン" },
+    { s: "🔔", name: "ベル" },
+    { s: "⭐", name: "スター" },
+    { s: "💎", name: "ダイヤ" },
+    { s: "👑", name: "クラウン" },
   ];
-  const SLOT_TOTAL = SLOT_SYMBOLS.reduce((a, x) => a + x.weight, 0);
-  const SYM = SLOT_SYMBOLS.map(x => [x.s, x.weight]);
+  // 当たりの種類。chance = 出る確率（%）、mult = 賭け金に対する倍率、count = そろう数。
+  // 先に当たりの種類をこの確率で決めて、それに合う絵柄をリールに表示する。
+  // どれにも当たらなかった残りの確率がハズレ。
+  const SLOT_PAYS = [
+    { s: "👑", count: 3, chance: 0.006, mult: 10000 },
+    { s: "💎", count: 3, chance: 0.05, mult: 1500 },
+    { s: "⭐", count: 3, chance: 0.2, mult: 600 },
+    { s: "👑", count: 2, chance: 0.4, mult: 400 },
+    { s: "🔔", count: 3, chance: 0.5, mult: 250 },
+    { s: "🍋", count: 3, chance: 1.8, mult: 100 },
+    { s: "🍒", count: 3, chance: 15, mult: 50 },
+    { s: "🍒", count: 2, chance: 25, mult: 10 },
+  ];
+  const SYM = SLOT_SYMBOLS.map(x => [x.s]);
   const bySymbol = Object.fromEntries(SLOT_SYMBOLS.map(x => [x.s, x]));
+  const payKey = p => p.s + p.count;
   const reels = [...document.querySelectorAll(".reel")];
   const slMsg = $("#sl-msg"), slBtn = $("#sl-spin"), slBar = makeBetBar($("#sl-bet"));
 
-  // 配当表（そろい方ごとの確率つき）
-  // 確率を % で表す。10% 以上は小数1桁、それより小さいときは有効数字2桁（例: 20.9% / 3.3% / 0.0064%）
-  const percent = p => {
-    const v = p * 100;
-    return `${v >= 10 ? v.toFixed(1) : Number(v.toPrecision(2))}%`;
-  };
-  const slotRows = [];
-  let slotRtp = 0;
-  for (const x of SLOT_SYMBOLS) {
-    const p = x.weight / SLOT_TOTAL;
-    const p3 = p ** 3, p2 = 3 * p * p * (1 - p);
-    slotRows.push({ key: x.s + "3", label: `${x.s}${x.s}${x.s}`, mult: x.three, p: p3 });
-    slotRtp += p3 * x.three;
-    if (x.two) {
-      slotRows.push({ key: x.s + "2", label: `${x.s}${x.s} が2つ`, mult: x.two, p: p2 });
-      slotRtp += p2 * x.two;
-    }
-  }
-  slotRows.sort((a, b) => b.mult - a.mult);
+  // 配当表（表の確率は SLOT_PAYS の値そのまま）
+  const slotRtp = SLOT_PAYS.reduce((a, p) => a + (p.chance / 100) * p.mult, 0);
+  const loseChance = 100 - SLOT_PAYS.reduce((a, p) => a + p.chance, 0);
   $("#sl-pay").innerHTML = `<thead><tr><th>そろい方</th><th>確率</th><th>配当</th></tr></thead><tbody>`
-    + slotRows.map(r => `<tr data-k="${r.key}"><td>${r.label}</td><td class="prob">${percent(r.p)}</td><td>×${r.mult.toLocaleString("ja-JP")}</td></tr>`).join("")
-    + `</tbody><tfoot><tr><td colspan="3">払い戻し率 約${Math.round(slotRtp * 100)}%（長く遊ぶと、賭けたチップのうち平均でこれだけ戻ります）</td></tr></tfoot>`;
+    + [...SLOT_PAYS].sort((a, b) => b.mult - a.mult).map(p =>
+      `<tr data-k="${payKey(p)}"><td>${p.count === 3 ? p.s.repeat(3) : `${p.s.repeat(2)} が2つ`}</td><td class="prob">${p.chance}%</td><td>×${p.mult.toLocaleString("ja-JP")}</td></tr>`).join("")
+    + `<tr><td>ハズレ</td><td class="prob">${Number(loseChance.toFixed(3))}%</td><td>×0</td></tr>`
+    + `</tbody><tfoot><tr><td colspan="3">払い戻し率 約${Math.round(slotRtp * 100).toLocaleString("ja-JP")}%（長く遊ぶと、賭けたチップのうち平均でこれだけ戻ります）</td></tr></tfoot>`;
 
-  function pick() {
-    let x = Math.random() * SLOT_TOTAL;
-    for (const [s, w] of SYM) if ((x -= w) < 0) return s;
-    return SYM[0][0];
-  }
-  // [倍率, 配当表のキー, そろった絵柄]
+  const randSym = (except = []) => {
+    const pool = SLOT_SYMBOLS.map(x => x.s).filter(s => !except.includes(s));
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+  // 3つのリールの絵柄から [倍率, 配当表のキー, そろった絵柄] を出す
   function slotMult(r) {
-    if (r[0] === r[1] && r[1] === r[2]) return [bySymbol[r[0]].three, r[0] + "3", r[0]];
-    for (const s of new Set(r)) {
-      if (r.filter(x => x === s).length === 2 && bySymbol[s].two) return [bySymbol[s].two, s + "2", s];
-    }
+    const counts = {};
+    r.forEach(s => (counts[s] = (counts[s] || 0) + 1));
+    for (const p of SLOT_PAYS) if (counts[p.s] === p.count) return [p.mult, payKey(p), p.s];
     return [0, null, null];
+  }
+  // 当たりの種類を確率で決めて、それに合うリールの並びを作る
+  function slotSpin() {
+    let x = Math.random() * 100;
+    for (const p of SLOT_PAYS) {
+      if ((x -= p.chance) < 0) {
+        if (p.count === 3) return [p.s, p.s, p.s];
+        const r = [p.s, p.s, randSym([p.s])];
+        for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+        return r;
+      }
+    }
+    // ハズレ: どの当たりにもならない並びを作る
+    for (;;) {
+      const r = [randSym(), randSym(), randSym()];
+      if (!slotMult(r)[0]) return r;
+    }
   }
   slBtn.onclick = async () => {
     const bet = slBar.bet;
@@ -268,7 +280,7 @@ window.KazinoGames.start = () => {
     slBtn.disabled = true; slBar.lock(true);
     say(slMsg, " ");
     document.querySelectorAll("#sl-pay tr").forEach(tr => tr.classList.remove("hit"));
-    const res = [pick(), pick(), pick()];
+    const res = slotSpin();
     const timers = reels.map(r => {
       r.classList.remove("win"); r.classList.add("spinning");
       return setInterval(() => { r.firstElementChild.textContent = SYM[Math.floor(Math.random() * SYM.length)][0]; }, 70);
@@ -287,7 +299,7 @@ window.KazinoGames.start = () => {
       $(`#sl-pay tr[data-k="${key}"]`).classList.add("hit");
     }
     const [t, k] = resultText(bet, payout, "slots");
-    const head = !mult ? "" : sym === "👑" && mult >= 1000 ? "ジャックポット！！ " : `${bySymbol[sym].name} ×${mult}！ `;
+    const head = !mult ? "" : sym === "👑" && mult === SLOT_PAYS[0].mult ? "ジャックポット！！ " : `${bySymbol[sym].name} ×${mult}！ `;
     say(slMsg, head + t, k);
     slBtn.disabled = false; slBar.lock(false);
   };

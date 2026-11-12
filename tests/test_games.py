@@ -67,26 +67,32 @@ class BlackjackTest(unittest.TestCase):
 
 class SlotsTest(unittest.TestCase):
     def test_payouts(self):
-        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 1000)
-        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 1)
-        self.assertEqual(slots.payout_multiplier(["👑", "👑", "🍋"]), 50)
+        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 10000)
+        self.assertEqual(slots.payout_multiplier(["👑", "🍋", "👑"]), 400)
+        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 10)
+        self.assertEqual(slots.payout_multiplier(["🍒", "🍒", "🍒"]), 50)
         self.assertEqual(slots.payout_multiplier(["🔔", "🔔", "🍋"]), 0)
         self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍋"]), 0)
 
-    def test_rarer_symbols_pay_more(self):
-        rows = [(w, three) for _, _, w, three, _ in slots.SYMBOLS]
-        for (w1, t1), (w2, t2) in zip(rows, rows[1:]):
-            self.assertGreater(w1, w2)
-            self.assertLess(t1, t2)
+    def test_spins_follow_the_table(self):
+        rng = random.Random(7)
+        n = 200_000
+        seen = {}
+        for _ in range(n):
+            mult = slots.payout_multiplier(slots.spin(rng))
+            seen[mult] = seen.get(mult, 0) + 1
+        for _, count, chance, mult in slots.PAYS:
+            if chance >= 1:
+                self.assertAlmostEqual(seen.get(mult, 0) / n * 100, chance, delta=chance * 0.05)
+        lose = 100 - sum(c for _, _, c, _ in slots.PAYS)
+        self.assertAlmostEqual(seen[0] / n * 100, lose, delta=1)
 
     def test_return_rate(self):
-        self.assertAlmostEqual(slots.return_rate(), 1.1692, places=3)
+        self.assertAlmostEqual(slots.return_rate(), 17.2, places=6)
 
-    def test_simulation_matches_return_rate(self):
-        rng = random.Random(42)
-        n = 200_000
-        rtp = sum(slots.payout_multiplier(slots.spin(rng)) for _ in range(n)) / n
-        self.assertAlmostEqual(rtp, slots.return_rate(), delta=0.08)
+    def test_percent(self):
+        self.assertEqual(slots.percent(0.00006), "0.006%")
+        self.assertEqual(slots.percent(0.15), "15%")
 
 
 class RouletteTest(unittest.TestCase):

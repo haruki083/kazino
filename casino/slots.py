@@ -8,52 +8,57 @@ import time
 from casino import ui
 from casino.wallet import Wallet
 
-# 絵柄ごとの設定: (絵柄, 名前, 出やすさ, 3つそろったときの倍率, 2つそろったときの倍率)
-# 倍率は賭け金込みの払い戻し。2つの倍率が 0 の絵柄は、2つでは配当なし。
-SYMBOLS = [
-    ("🍒", "チェリー", 32, 5, 1),
-    ("🍋", "レモン", 26, 10, 0),
-    ("🔔", "ベル", 18, 25, 0),
-    ("⭐", "スター", 12, 60, 0),
-    ("💎", "ダイヤ", 8, 150, 0),
-    ("👑", "クラウン", 4, 1000, 50),
+SYMBOLS = ["🍒", "🍋", "🔔", "⭐", "💎", "👑"]
+NAMES = {"🍒": "チェリー", "🍋": "レモン", "🔔": "ベル", "⭐": "スター", "💎": "ダイヤ", "👑": "クラウン"}
+
+# 当たりの種類: (絵柄, そろう数, 確率[%], 賭け金に対する倍率)
+# 先に当たりの種類をこの確率で決めて、それに合う絵柄をリールに表示する。
+# どれにも当たらなかった残りの確率がハズレ。
+PAYS = [
+    ("👑", 3, 0.006, 10000),
+    ("💎", 3, 0.05, 1500),
+    ("⭐", 3, 0.2, 600),
+    ("👑", 2, 0.4, 400),
+    ("🔔", 3, 0.5, 250),
+    ("🍋", 3, 1.8, 100),
+    ("🍒", 3, 15, 50),
+    ("🍒", 2, 25, 10),
 ]
-THREE_OF_A_KIND = {s: three for s, _, _, three, _ in SYMBOLS}
-TWO_OF_A_KIND = {s: two for s, _, _, _, two in SYMBOLS if two}
-
-_NAMES = [s for s, *_ in SYMBOLS]
-_WEIGHTS = [w for _, _, w, _, _ in SYMBOLS]
-_TOTAL = sum(_WEIGHTS)
-
-
-def spin(rng: random.Random) -> list[str]:
-    return rng.choices(_NAMES, weights=_WEIGHTS, k=3)
 
 
 def payout_multiplier(reels: list[str]) -> int:
-    if len(set(reels)) == 1:
-        return THREE_OF_A_KIND[reels[0]]
-    for symbol in set(reels):
-        if reels.count(symbol) == 2 and symbol in TWO_OF_A_KIND:
-            return TWO_OF_A_KIND[symbol]
+    for symbol, count, _, mult in PAYS:
+        if reels.count(symbol) == count:
+            return mult
     return 0
 
 
+def spin(rng: random.Random) -> list[str]:
+    x = rng.random() * 100
+    for symbol, count, chance, _ in PAYS:
+        x -= chance
+        if x < 0:
+            if count == 3:
+                return [symbol] * 3
+            reels = [symbol, symbol, rng.choice([s for s in SYMBOLS if s != symbol])]
+            rng.shuffle(reels)
+            return reels
+    while True:  # ハズレ: どの当たりにもならない並び
+        reels = [rng.choice(SYMBOLS) for _ in range(3)]
+        if not payout_multiplier(reels):
+            return reels
+
+
 def paytable() -> list[tuple[str, float, int]]:
-    """(そろい方, 確率, 倍率) の一覧を倍率の高い順に返す。"""
-    rows = []
-    for symbol, _, weight, three, two in SYMBOLS:
-        p = weight / _TOTAL
-        rows.append((symbol * 3, p ** 3, three))
-        if two:
-            rows.append((f"{symbol * 2} が2つ", 3 * p * p * (1 - p), two))
+    """(そろい方, 確率, 倍率) の一覧を倍率の高い順に返す。確率は 0〜1。"""
+    rows = [(symbol * 3 if count == 3 else f"{symbol * 2} が2つ", chance / 100, mult)
+            for symbol, count, chance, mult in PAYS]
     return sorted(rows, key=lambda r: -r[2])
 
 
 def percent(p: float) -> str:
-    """確率を % 表記にする。10% 以上は小数1桁、それより小さいときは有効数字2桁。"""
-    v = p * 100
-    return f"{v:.1f}%" if v >= 10 else f"{float(f'{v:.2g}'):g}%"
+    """確率（0〜1）を % 表記にする。"""
+    return f"{p * 100:g}%"
 
 
 def return_rate() -> float:
@@ -64,7 +69,7 @@ def return_rate() -> float:
 def _animate(rng: random.Random, final: list[str], animate: bool) -> None:
     if animate:
         for _ in range(12):
-            print("\r  | " + " | ".join(rng.choices(_NAMES, k=3)) + " |", end="", flush=True)
+            print("\r  | " + " | ".join(rng.choices(SYMBOLS, k=3)) + " |", end="", flush=True)
             time.sleep(0.07)
     print("\r  | " + " | ".join(final) + " |")
 
@@ -75,6 +80,8 @@ def play(wallet: Wallet, rng: random.Random | None = None, animate: bool = True)
     print("  配当表（そろい方 / 確率 / 倍率）:")
     for label, p, mult in paytable():
         print(f"    {ui.pad(label, 12)} {percent(p):>8} x{mult}")
+    lose = 1 - sum(p for _, p, _ in paytable())
+    print(f"    {ui.pad('ハズレ', 12)} {percent(round(lose, 6)):>8} x0")
     print(f"  払い戻し率 約{round(return_rate() * 100)}%")
     while True:
         print()
