@@ -50,6 +50,12 @@ def paytable() -> list[tuple[str, float, int]]:
     return sorted(rows, key=lambda r: -r[2])
 
 
+def percent(p: float) -> str:
+    """確率を % 表記にする。10% 以上は小数1桁、それより小さいときは有効数字2桁。"""
+    v = p * 100
+    return f"{v:.1f}%" if v >= 10 else f"{float(f'{v:.2g}'):g}%"
+
+
 def return_rate() -> float:
     """長く遊んだときの平均払い戻し率（1.0 = 100%）。"""
     return sum(p * mult for _, p, mult in paytable())
@@ -68,7 +74,7 @@ def play(wallet: Wallet, rng: random.Random | None = None, animate: bool = True)
     ui.title("🎰 スロットマシン 🎰")
     print("  配当表（そろい方 / 確率 / 倍率）:")
     for label, p, mult in paytable():
-        print(f"    {ui.pad(label, 12)} 1/{round(1 / p):<6} x{mult}")
+        print(f"    {ui.pad(label, 12)} {percent(p):>8} x{mult}")
     print(f"  払い戻し率 約{round(return_rate() * 100)}%")
     while True:
         print()

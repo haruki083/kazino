@@ -227,7 +227,11 @@ window.KazinoGames.start = () => {
   const slMsg = $("#sl-msg"), slBtn = $("#sl-spin"), slBar = makeBetBar($("#sl-bet"));
 
   // 配当表（そろい方ごとの確率つき）
-  const oneIn = p => `1/${Math.round(1 / p).toLocaleString("ja-JP")}`;
+  // 確率を % で表す。10% 以上は小数1桁、それより小さいときは有効数字2桁（例: 20.9% / 3.3% / 0.0064%）
+  const percent = p => {
+    const v = p * 100;
+    return `${v >= 10 ? v.toFixed(1) : Number(v.toPrecision(2))}%`;
+  };
   const slotRows = [];
   let slotRtp = 0;
   for (const x of SLOT_SYMBOLS) {
@@ -242,7 +246,7 @@ window.KazinoGames.start = () => {
   }
   slotRows.sort((a, b) => b.mult - a.mult);
   $("#sl-pay").innerHTML = `<thead><tr><th>そろい方</th><th>確率</th><th>配当</th></tr></thead><tbody>`
-    + slotRows.map(r => `<tr data-k="${r.key}"><td>${r.label}</td><td class="prob">${oneIn(r.p)}</td><td>×${r.mult.toLocaleString("ja-JP")}</td></tr>`).join("")
+    + slotRows.map(r => `<tr data-k="${r.key}"><td>${r.label}</td><td class="prob">${percent(r.p)}</td><td>×${r.mult.toLocaleString("ja-JP")}</td></tr>`).join("")
     + `</tbody><tfoot><tr><td colspan="3">払い戻し率 約${Math.round(slotRtp * 100)}%（長く遊ぶと、賭けたチップのうち平均でこれだけ戻ります）</td></tr></tfoot>`;
 
   function pick() {
