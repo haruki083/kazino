@@ -3,759 +3,230 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head>
-<body>
 <title>KAZINO</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ラスベガス気分で遊べるブラウザカジノ。会員登録してブラックジャック・スロット・ルーレット・ビデオポーカーで遊べます。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
-<style>
-/* Layout: one felt table at a time under a brass-lettered header; tabs switch which game is on the felt. */
-:root {
-  --felt: #13594a;
-  --felt-deep: #0b3a30;
-  --felt-line: rgba(240, 214, 150, .32);
-  --rail: #3a2417;
-  --rail-edge: #5c3b26;
-  --brass: #e2b65c;
-  --brass-deep: #a47628;
-  --ivory: #f7f0e1;
-  --ink: #1f1b16;
-  --red: #c7372c;
-  --zero: #1f7a52;
-  --mist: #a9cfc1;
-  --win: #8fe8b2;
-  --lose: #ffab9c;
-  --display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
-  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
-  --cw: clamp(50px, 15vw, 76px);
-  color-scheme: dark;
-}
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html { background: var(--felt-deep); }
-body {
-  background: radial-gradient(ellipse 120% 70% at 50% 0%, var(--felt) 0%, var(--felt-deep) 78%) fixed, var(--felt-deep);
-  color: var(--ivory);
-  font-family: var(--body);
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 0 40px;
-}
-.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 22px; }
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@500;600&family=Monoton&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
-/* header */
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 18px; }
-.logo { font-family: var(--display); font-size: clamp(28px, 7vw, 40px); letter-spacing: .14em; color: var(--brass); line-height: 1; text-shadow: 0 2px 0 var(--brass-deep), 0 6px 18px rgba(0,0,0,.35); margin: 0; }
-.logo small { display: block; font-family: var(--body); font-size: 11px; letter-spacing: .3em; color: var(--mist); text-shadow: none; margin-top: 6px; }
-.purse { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.25); border: 1px solid var(--felt-line); border-radius: 999px; padding: 6px 16px 6px 8px; }
-.purse .coin { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, var(--brass) 52%, transparent 54%), repeating-conic-gradient(var(--brass) 0 20deg, var(--ivory) 20deg 40deg); flex: none; }
-.purse b { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; transition: color .3s; }
-.purse b.up { color: var(--win); }
-.purse b.down { color: var(--lose); }
-.purse span { font-size: 13px; color: var(--mist); }
-
-/* tabs */
-.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-.tabs a { color: var(--mist); text-decoration: none; padding: 8px 16px; border-radius: 999px; border: 1px solid transparent; font-weight: 700; font-size: 14px; }
-.tabs a:hover { color: var(--ivory); border-color: var(--felt-line); }
-.tabs a[aria-current="page"] { color: var(--ink); background: var(--brass); }
-
-/* table surface */
-.table {
-  position: relative;
-  border-radius: 30px;
-  padding: 26px clamp(14px, 4vw, 30px) 24px;
-  background: rgba(0,0,0,.1);
-  box-shadow: 0 0 0 10px var(--rail), 0 0 0 12px var(--rail-edge), 0 18px 40px rgba(0,0,0,.45), inset 0 2px 34px rgba(0,0,0,.3);
-  margin: 12px 0;
-  display: grid;
-  gap: 18px;
-}
-.printed { font-family: var(--display); color: var(--felt-line); letter-spacing: .22em; font-size: 12px; text-align: center; text-transform: uppercase; text-wrap: balance; margin: 0; }
-.printed.big { font-size: clamp(14px, 3.4vw, 19px); }
-.seat { display: grid; gap: 8px; justify-items: center; }
-.seat-label { display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: .12em; color: var(--mist); }
-.val { font-family: var(--mono); font-weight: 600; background: rgba(0,0,0,.35); color: var(--ivory); border-radius: 999px; padding: 0 10px; min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
-.val:empty { display: none; }
-.msg { min-height: 1.7em; text-align: center; font-weight: 700; font-size: 18px; margin: 0; text-wrap: balance; }
-.msg.win { color: var(--win); }
-.msg.lose { color: var(--lose); }
-.msg.push { color: var(--brass); }
-
-/* controls */
-.controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
-.btn { font: inherit; font-weight: 700; background: var(--brass); color: var(--ink); border: 0; border-radius: 999px; padding: 10px 22px; cursor: pointer; box-shadow: 0 3px 0 var(--brass-deep); transition: transform .1s; }
-.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--brass-deep); }
-.btn:disabled { opacity: .35; cursor: not-allowed; }
-.btn.ghost { background: transparent; color: var(--ivory); border: 1px solid var(--felt-line); box-shadow: none; }
-.btn.small { padding: 6px 14px; font-size: 13px; }
-:focus-visible { outline: 3px solid var(--ivory); outline-offset: 2px; }
-
-/* bet bar */
-.betbar { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 12px; border-top: 1px dashed var(--felt-line); }
-.bet-amount { font-size: 14px; color: var(--mist); display: flex; align-items: baseline; gap: 6px; }
-.bet-amount b { font-family: var(--mono); font-size: 22px; color: var(--ivory); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
-.chips { display: flex; gap: 8px; }
-.chip {
-  --c: #2f6fb5;
-  width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer;
-  background: radial-gradient(circle, var(--c) 54%, transparent 55%), repeating-conic-gradient(var(--c) 0 22.5deg, var(--ivory) 22.5deg 45deg);
-  color: #fff; font-family: var(--mono); font-weight: 600; font-size: 13px;
-  box-shadow: 0 3px 0 rgba(0,0,0,.45); transition: transform .12s;
-}
-.chip:hover:not(:disabled) { transform: translateY(-3px); }
-.chip:disabled { opacity: .3; cursor: not-allowed; }
-.chip[aria-pressed="true"] { transform: translateY(-5px); box-shadow: 0 0 0 3px var(--brass), 0 6px 0 rgba(0,0,0,.45); }
-.c10 { --c: #2f6fb5; }
-.c50 { --c: #c7372c; }
-.c100 { --c: #26221d; }
-.c500 { --c: #7b3fa0; }
-.betbar.locked { opacity: .55; }
-
-/* playing cards */
-.hand { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: calc(var(--cw) * 1.4); }
-.card { width: var(--cw); aspect-ratio: 5 / 7; background: var(--ivory); color: var(--ink); border-radius: 8px; position: relative; box-shadow: 0 3px 8px rgba(0,0,0,.4); font-family: var(--mono); flex: none; animation: deal .32s ease-out both; }
-.card.red { color: var(--red); }
-.card .tl { position: absolute; top: 5px; left: 6px; line-height: 1; font-weight: 600; font-size: calc(var(--cw) * .23); text-align: center; }
-.card .tl i { display: block; font-style: normal; font-size: .85em; }
-.card .br { top: auto; left: auto; bottom: 5px; right: 6px; transform: rotate(180deg); }
-.card .mid { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--cw) * .48); }
-.card.back { background: repeating-linear-gradient(45deg, var(--red) 0 5px, #9b2a21 5px 10px); border: 4px solid var(--ivory); }
-.card.stay { animation: none; }
-@keyframes deal { from { transform: translateY(-24px) rotate(-6deg); opacity: 0; } }
-
-/* slots */
-.machine { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 360px); margin: 0 auto; padding: 14px; border-radius: 18px; background: linear-gradient(var(--rail-edge), var(--rail)); border: 2px solid var(--brass-deep); box-shadow: 0 10px 24px rgba(0,0,0,.4); }
-.reel { background: var(--ivory); border-radius: 10px; height: clamp(84px, 24vw, 110px); display: grid; place-items: center; font-size: clamp(40px, 12vw, 58px); overflow: hidden; box-shadow: inset 0 10px 12px -6px rgba(0,0,0,.35), inset 0 -10px 12px -6px rgba(0,0,0,.35); transition: box-shadow .2s; }
-.reel span { display: block; line-height: 1; }
-.reel.spinning span { filter: blur(1.5px); animation: roll .09s linear infinite; }
-.reel.win { box-shadow: 0 0 0 4px var(--brass), 0 0 22px var(--brass); }
-@keyframes roll { from { transform: translateY(-25%); } to { transform: translateY(25%); } }
-.paytable { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; min-width: 220px; }
-.paytable td { padding: 3px 12px; border-bottom: 1px solid var(--felt-line); }
-.paytable td:last-child { font-family: var(--mono); text-align: right; color: var(--brass); }
-.paytable tr.hit td { background: var(--brass); color: var(--ink); }
-.paytable tr.hit td:last-child { color: var(--ink); }
-
-/* roulette */
-.rl-top { display: flex; gap: 24px; align-items: center; justify-content: center; flex-wrap: wrap; }
-.wheel-box { position: relative; width: 240px; max-width: 100%; aspect-ratio: 1; }
-.wheel-box canvas { width: 100%; height: 100%; display: block; transition: transform 4.2s cubic-bezier(.15,.7,.18,1); }
-.wheel-box::after { content: ""; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); border: 10px solid transparent; border-top: 18px solid var(--brass); filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
-.rl-side { display: grid; gap: 10px; justify-items: center; }
-.rl-result { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-weight: 600; font-size: 34px; border: 3px solid var(--brass); background: rgba(0,0,0,.3); }
-.rl-result.r { background: var(--red); }
-.rl-result.b { background: var(--ink); }
-.rl-result.z { background: var(--zero); }
-.history { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 220px; min-height: 24px; }
-.history .r { background: var(--red); }
-.history .b { background: var(--ink); }
-.history .z { background: var(--zero); }
-.history span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 11px; }
-.board-scroll { overflow-x: auto; padding: 8px 4px; }
-.board { display: grid; grid-template-columns: 44px repeat(12, minmax(34px, 1fr)); grid-auto-rows: 42px; gap: 3px; min-width: 500px; }
-.cell { position: relative; font: inherit; font-family: var(--mono); font-weight: 600; color: var(--ivory); background: transparent; border: 1px solid var(--felt-line); border-radius: 4px; cursor: pointer; display: grid; place-items: center; padding: 0; }
-.cell:hover { filter: brightness(1.2); }
-.cell.r { background: var(--red); }
-.cell.b { background: var(--ink); }
-.cell.z { background: var(--zero); }
-.cell.out { font-family: var(--body); font-size: 13px; }
-.cell.landed { box-shadow: 0 0 0 3px var(--brass), 0 0 16px var(--brass); z-index: 1; }
-.stake { position: absolute; top: -8px; right: -6px; min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; background: var(--brass); color: var(--ink); font-size: 10px; display: grid; place-items: center; border: 2px dashed var(--ivory); z-index: 2; pointer-events: none; }
-.stake.won { background: var(--win); }
-
-/* poker */
-.pk-hand { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--cw) * 1.4 + 30px); }
-.pk-slot { font: inherit; background: none; border: 0; padding: 0; color: inherit; display: grid; gap: 6px; justify-items: center; cursor: pointer; }
-.pk-slot:disabled { cursor: default; }
-.pk-slot .tag { font-size: 11px; font-weight: 700; letter-spacing: .15em; color: var(--ink); background: var(--brass); padding: 1px 8px; border-radius: 4px; visibility: hidden; }
-.pk-slot[aria-pressed="true"] .tag { visibility: visible; }
-.pk-slot[aria-pressed="true"] .card { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--brass), 0 8px 12px rgba(0,0,0,.4); }
-.pk-slot .card { transition: transform .15s; }
-
-details.rules { font-size: 14px; color: var(--mist); max-width: 62ch; margin: 0 auto; }
-details.rules summary { cursor: pointer; text-align: center; }
-details.rules p { margin: 8px 0 0; }
-.foot { text-align: center; font-size: 12px; color: var(--mist); margin: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .card, .reel.spinning span { animation: none; }
-  .wheel-box canvas { transition: none; }
-}
-</style>
-
-<div class="wrap">
-  <header class="top">
-    <h1 class="logo">KAZINO<small>CASINO TABLE GAMES</small></h1>
-    <div class="purse" aria-live="polite">
-      <div class="coin" aria-hidden="true"></div>
-      <b id="balance">1,000</b><span>枚</span>
-      <button class="btn small" id="refill" hidden>1000枚もらう</button>
+<!-- 入口 -->
+<section class="screen entrance" id="s-entrance">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="ent-inner">
+    <div class="sign">
+      <p class="sign-top">WELCOME TO</p>
+      <h1 class="neon">KAZINO</h1>
+      <p class="sign-sub">HOTEL &amp; CASINO · OPEN 24 HOURS</p>
     </div>
-  </header>
-
-  <nav class="tabs" aria-label="ゲーム">
-    <a href="#blackjack" data-game="blackjack">ブラックジャック</a>
-    <a href="#slots" data-game="slots">スロット</a>
-    <a href="#roulette" data-game="roulette">ルーレット</a>
-    <a href="#poker" data-game="poker">ビデオポーカー</a>
-  </nav>
-
-  <!-- BLACKJACK -->
-  <section class="table" id="g-blackjack" aria-label="ブラックジャック">
-    <p class="printed big">Blackjack pays 3 to 2</p>
-    <div class="seat">
-      <div class="seat-label">ディーラー <span class="val" id="bj-dv"></span></div>
-      <div class="hand" id="bj-dealer"></div>
+    <p class="greet" id="ent-greet"></p>
+    <div class="ent-actions">
+      <button class="btn big" id="ent-enter">入場する</button>
+      <button class="btn ghost" id="ent-join">会員登録（1000枚プレゼント）</button>
     </div>
-    <p class="printed">Dealer must stand on all 17s</p>
-    <div class="seat">
-      <div class="hand" id="bj-player"></div>
-      <div class="seat-label">あなた <span class="val" id="bj-pv"></span></div>
-    </div>
-    <p class="msg" id="bj-msg" aria-live="polite">賭け金を決めて「配る」を押してください。</p>
-    <div class="controls">
-      <button class="btn" id="bj-deal">配る</button>
-      <button class="btn ghost" id="bj-hit" disabled>ヒット</button>
-      <button class="btn ghost" id="bj-stand" disabled>スタンド</button>
-      <button class="btn ghost" id="bj-double" disabled>ダブル</button>
-    </div>
-    <div class="betbar" id="bj-bet"></div>
-    <details class="rules"><summary>ルール</summary>
-      <p>カードの合計を21に近づけた方が勝ち。21を超えるとバーストで負けです。絵札は10、Aは1か11として数えます。最初の2枚で21になるとブラックジャックで、賭け金の1.5倍の勝ち。ダブルは賭け金を2倍にして、カードをあと1枚だけ引きます。</p>
-    </details>
-  </section>
+    <p class="mode-note" id="mode-note"></p>
+  </div>
+  <div class="strip" aria-hidden="true">
+    <div class="tower t1"></div><div class="tower t2"></div><div class="tower t3"></div><div class="tower t4"></div><div class="tower t5"></div><div class="tower t6"></div><div class="tower t7"></div>
+  </div>
+</section>
 
-  <!-- SLOTS -->
-  <section class="table" id="g-slots" aria-label="スロット" hidden>
-    <p class="printed big">Three reels · one line</p>
-    <div class="machine">
-      <div class="reel"><span>👑</span></div>
-      <div class="reel"><span>👑</span></div>
-      <div class="reel"><span>👑</span></div>
-    </div>
-    <p class="msg" id="sl-msg" aria-live="polite">賭け金を決めてレバーを引こう。</p>
-    <div class="controls"><button class="btn" id="sl-spin">スピン</button></div>
-    <table class="paytable" id="sl-pay" aria-label="配当表"></table>
-    <div class="betbar" id="sl-bet"></div>
-  </section>
-
-  <!-- ROULETTE -->
-  <section class="table" id="g-roulette" aria-label="ルーレット" hidden>
-    <p class="printed big">Single zero · European wheel</p>
-    <div class="rl-top">
-      <div class="wheel-box"><canvas id="rl-wheel" width="240" height="240" aria-label="ルーレット盤"></canvas></div>
-      <div class="rl-side">
-        <div class="rl-result" id="rl-result">–</div>
-        <div class="history" id="rl-history" aria-label="これまでの出目"></div>
+<!-- 会員カウンター -->
+<section class="screen desk" id="s-desk" hidden>
+  <div class="desk-panel">
+    <p class="eyebrow">PLAYERS CLUB · 会員カウンター</p>
+    <div id="desk-forms">
+      <div class="desk-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="login" aria-selected="true">ログイン</button>
+        <button type="button" role="tab" data-tab="register" aria-selected="false">会員登録</button>
       </div>
+      <form id="f-login" class="form" novalidate>
+        <label for="login-email">メールアドレス</label>
+        <input id="login-email" type="email" autocomplete="email" required>
+        <label for="login-pass">パスワード</label>
+        <input id="login-pass" type="password" autocomplete="current-password" required>
+        <button class="btn" type="submit">ログインして入場</button>
+      </form>
+      <form id="f-register" class="form" novalidate hidden>
+        <label for="reg-name">ニックネーム（ランキングに表示されます）</label>
+        <input id="reg-name" type="text" maxlength="12" autocomplete="nickname" required>
+        <label for="reg-email">メールアドレス</label>
+        <input id="reg-email" type="email" autocomplete="email" required>
+        <label for="reg-pass">パスワード（6文字以上）</label>
+        <input id="reg-pass" type="password" minlength="6" autocomplete="new-password" required>
+        <button class="btn" type="submit">会員カードを発行する</button>
+      </form>
+      <p class="form-msg" id="desk-msg" role="alert"></p>
     </div>
-    <p class="msg" id="rl-msg" aria-live="polite">チップを選んで、盤の上に置いてください。</p>
-    <div class="board-scroll"><div class="board" id="rl-board"></div></div>
-    <div class="betbar">
-      <div class="bet-amount">合計 <b id="rl-total">0</b><span>枚</span></div>
-      <div class="chips" id="rl-chips"></div>
+    <div id="new-card" class="new-card" hidden>
+      <p class="new-card-title">会員カードを発行しました</p>
+      <div id="new-card-slot"></div>
+      <p class="new-card-note">ウェルカムボーナスとしてチップ 1000 枚をお渡しします。</p>
+      <button class="btn big" id="new-card-enter">カジノに入る</button>
     </div>
-    <div class="controls">
-      <button class="btn" id="rl-spin" disabled>スピン</button>
-      <button class="btn ghost" id="rl-clear">賭けを外す</button>
-      <button class="btn ghost" id="rl-rebet" disabled>同じ賭け</button>
-    </div>
-    <details class="rules"><summary>配当</summary>
-      <p>数字ひとつ 36倍 ／ 赤・黒・偶数・奇数・1-18・19-36 2倍 ／ 1st・2nd・3rd 12 3倍（賭け金込みの払い戻し）。0に落ちると、0に賭けた分以外はすべて負けです。</p>
-    </details>
-  </section>
+    <button class="link" id="desk-back" type="button">← 入口に戻る</button>
+  </div>
+</section>
 
-  <!-- POKER -->
-  <section class="table" id="g-poker" aria-label="ビデオポーカー" hidden>
-    <p class="printed big">Jacks or better</p>
-    <div class="pk-hand" id="pk-hand"></div>
-    <p class="msg" id="pk-msg" aria-live="polite">配られた5枚から残すカードをタップして、1回だけ交換できます。</p>
-    <div class="controls"><button class="btn" id="pk-main">配る</button></div>
-    <table class="paytable" id="pk-pay" aria-label="配当表"></table>
-    <div class="betbar" id="pk-bet"></div>
-  </section>
-
-  <p class="foot">チップはこのブラウザに保存されます。本物のお金は使いません。</p>
+<!-- 扉 -->
+<div class="doors" id="doors" hidden aria-hidden="true">
+  <div class="door left"><span>KA</span></div>
+  <div class="door right"><span>ZINO</span></div>
 </div>
 
-<script>
-(() => {
-  const $ = (s, r = document) => r.querySelector(s);
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const sleep = ms => new Promise(r => setTimeout(r, reduceMotion ? 0 : ms));
-  const MIN_BET = 10, START = 1000, KEY = "kazino.balance";
+<!-- カジノフロア -->
+<section class="screen floor" id="s-floor" hidden>
+  <header class="floor-top">
+    <a class="mini-logo" href="#lobby">KAZINO</a>
+    <div class="member-pill">
+      <span class="tier-badge" id="m-tier"></span>
+      <span class="m-name" id="m-name"></span>
+      <span class="coin" aria-hidden="true"></span>
+      <b data-balance>0</b><span class="unit">枚</span>
+    </div>
+    <button class="btn ghost small" id="logout">退店する</button>
+  </header>
+  <nav class="crumb" id="crumb" hidden><a href="#lobby">← フロアに戻る</a><span id="crumb-title"></span></nav>
+  <main class="floor-main">
+    <section id="v-lobby" class="lobby">
+      <div class="lobby-hero">
+        <div class="lobby-intro">
+          <p class="eyebrow">CASINO FLOOR</p>
+          <h2 id="lobby-hi">ようこそ</h2>
+          <dl class="stats" id="stats"></dl>
+          <div class="perks">
+            <button class="btn" id="bonus">本日のボーナスを受け取る</button>
+            <button class="btn ghost" id="rescue" hidden>チップを1000枚に戻す</button>
+          </div>
+        </div>
+        <div id="lobby-card"></div>
+      </div>
+      <h3 class="floor-heading">テーブルを選ぶ</h3>
+      <div class="tiles">
+        <a class="tile" href="#blackjack">
+          <div class="art art-bj" aria-hidden="true"><span class="mini">A♠</span><span class="mini red">K♥</span></div>
+          <strong>ブラックジャック</strong><span>21を目指すディーラーとの勝負</span><em>MIN 10</em>
+        </a>
+        <a class="tile" href="#slots">
+          <div class="art art-sl" aria-hidden="true"><span>👑</span><span>👑</span><span>👑</span></div>
+          <strong>スロット</strong><span>3リール、最大200倍</span><em>MIN 10</em>
+        </a>
+        <a class="tile" href="#roulette">
+          <div class="art art-rl" aria-hidden="true"><span class="disc"></span></div>
+          <strong>ルーレット</strong><span>シングルゼロのヨーロピアン</span><em>MIN 10</em>
+        </a>
+        <a class="tile" href="#poker">
+          <div class="art art-pk" aria-hidden="true"><span class="mini">10♦</span><span class="mini">J♦</span><span class="mini">Q♦</span><span class="mini">K♦</span><span class="mini">A♦</span></div>
+          <strong>ビデオポーカー</strong><span>ジャックス・オア・ベター</span><em>MIN 10</em>
+        </a>
+        <a class="tile tile-rank" href="#ranking">
+          <div class="art art-rk" aria-hidden="true">TOP 10</div>
+          <strong>ハイローラーズ</strong><span>チップ持ちランキング</span><em>VIP</em>
+        </a>
+      </div>
+    </section>
 
-  /* ---------- wallet ---------- */
-  let balance = (() => {
-    try { const v = parseInt(localStorage.getItem(KEY), 10); return Number.isFinite(v) && v >= 0 ? v : START; }
-    catch (e) { return START; }
-  })();
-  const balEl = $("#balance");
-  const syncers = [];
-  function setBalance(v) {
-    const diff = v - balance;
-    balance = v;
-    try { localStorage.setItem(KEY, String(v)); } catch (e) {}
-    balEl.textContent = balance.toLocaleString("ja-JP");
-    balEl.className = diff > 0 ? "up" : diff < 0 ? "down" : "";
-    clearTimeout(setBalance.t);
-    setBalance.t = setTimeout(() => (balEl.className = ""), 700);
-    $("#refill").hidden = balance >= MIN_BET;
-    syncers.forEach(f => f());
-  }
-  const take = n => (n > 0 && n <= balance ? (setBalance(balance - n), true) : false);
-  const pay = n => { if (n > 0) setBalance(balance + n); };
-  $("#refill").onclick = () => setBalance(START);
+    <section id="v-ranking" class="ranking" hidden>
+      <p class="printed big">High rollers</p>
+      <div class="rank-scroll">
+        <table class="rank">
+          <thead><tr><th>#</th><th>名前</th><th>ランク</th><th class="num">チップ</th></tr></thead>
+          <tbody id="rank-body"></tbody>
+        </table>
+      </div>
+      <p class="rank-foot">会員ランク：ブロンズ → シルバー（2,000枚）→ ゴールド（5,000枚）→ プラチナ（20,000枚）</p>
+    </section>
 
-  function say(el, text, kind = "") { el.textContent = text; el.className = "msg" + (kind ? " " + kind : ""); }
-  function resultText(bet, payout) {
-    const d = payout - bet;
-    if (d > 0) return [`+${d}枚の勝ち！`, "win"];
-    if (d === 0) return ["賭け金が戻りました。", "push"];
-    return [`${-d}枚の負け`, "lose"];
-  }
+        <!-- BLACKJACK -->
+        <section class="table" id="v-blackjack" aria-label="ブラックジャック" hidden>
+          <p class="printed big">Blackjack pays 3 to 2</p>
+          <div class="seat">
+            <div class="seat-label">ディーラー <span class="val" id="bj-dv"></span></div>
+            <div class="hand" id="bj-dealer"></div>
+          </div>
+          <p class="printed">Dealer must stand on all 17s</p>
+          <div class="seat">
+            <div class="hand" id="bj-player"></div>
+            <div class="seat-label">あなた <span class="val" id="bj-pv"></span></div>
+          </div>
+          <p class="msg" id="bj-msg" aria-live="polite">賭け金を決めて「配る」を押してください。</p>
+          <div class="controls">
+            <button class="btn" id="bj-deal">配る</button>
+            <button class="btn ghost" id="bj-hit" disabled>ヒット</button>
+            <button class="btn ghost" id="bj-stand" disabled>スタンド</button>
+            <button class="btn ghost" id="bj-double" disabled>ダブル</button>
+          </div>
+          <div class="betbar" id="bj-bet"></div>
+          <details class="rules"><summary>ルール</summary>
+            <p>カードの合計を21に近づけた方が勝ち。21を超えるとバーストで負けです。絵札は10、Aは1か11として数えます。最初の2枚で21になるとブラックジャックで、賭け金の1.5倍の勝ち。ダブルは賭け金を2倍にして、カードをあと1枚だけ引きます。</p>
+          </details>
+        </section>
 
-  /* ---------- bet bar ---------- */
-  const DENOMS = [10, 50, 100, 500];
-  const chipsHTML = attr => DENOMS.map(v => `<button class="chip c${v}" data-v="${v}" ${attr(v)}>${v}</button>`).join("");
-  function makeBetBar(root) {
-    root.innerHTML = `<div class="bet-amount">賭け金 <b>0</b><span>枚</span></div>
-      <div class="chips">${chipsHTML(v => `aria-label="${v}枚追加"`)}</div>
-      <button class="btn ghost small" data-clear>クリア</button>`;
-    const out = $("b", root);
-    const bar = { bet: Math.min(50, balance), locked: false };
-    bar.sync = () => {
-      if (!bar.locked && bar.bet > balance) bar.bet = Math.floor(balance / 10) * 10;
-      out.textContent = bar.bet;
-      root.querySelectorAll("button").forEach(b => {
-        b.disabled = bar.locked || (b.dataset.v ? bar.bet + +b.dataset.v > balance : bar.bet === 0);
-      });
-      root.classList.toggle("locked", bar.locked);
-    };
-    bar.lock = v => { bar.locked = v; bar.sync(); };
-    root.addEventListener("click", e => {
-      const b = e.target.closest("button");
-      if (!b || bar.locked) return;
-      bar.bet = b.dataset.v ? Math.min(balance, bar.bet + +b.dataset.v) : 0;
-      bar.sync();
-    });
-    syncers.push(bar.sync);
-    bar.sync();
-    return bar;
-  }
-  function checkBet(bet, msgEl) {
-    if (bet < MIN_BET) { say(msgEl, `最低${MIN_BET}枚から賭けられます。チップを押して賭け金を決めてください。`, "lose"); return false; }
-    if (!take(bet)) { say(msgEl, "チップが足りません。", "lose"); return false; }
-    return true;
-  }
+        <!-- SLOTS -->
+        <section class="table" id="v-slots" aria-label="スロット" hidden>
+          <p class="printed big">Three reels · one line</p>
+          <div class="machine">
+            <div class="reel"><span>👑</span></div>
+            <div class="reel"><span>👑</span></div>
+            <div class="reel"><span>👑</span></div>
+          </div>
+          <p class="msg" id="sl-msg" aria-live="polite">賭け金を決めてレバーを引こう。</p>
+          <div class="controls"><button class="btn" id="sl-spin">スピン</button></div>
+          <table class="paytable" id="sl-pay" aria-label="配当表"></table>
+          <div class="betbar" id="sl-bet"></div>
+        </section>
 
-  /* ---------- cards ---------- */
-  const SUITS = ["♠", "♥", "♦", "♣"], LBL = { 11: "J", 12: "Q", 13: "K", 14: "A" };
-  const label = c => LBL[c.r] || String(c.r);
-  function newDeck(n = 1) {
-    const d = [];
-    for (let k = 0; k < n; k++) for (const s of SUITS) for (let r = 2; r <= 14; r++) d.push({ r, s });
-    for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
-    return d;
-  }
-  function cardHTML(c, hidden, extra = "") {
-    if (hidden) return `<div class="card back ${extra}" role="img" aria-label="伏せたカード"></div>`;
-    const red = c.s === "♥" || c.s === "♦";
-    const l = label(c);
-    return `<div class="card${red ? " red" : ""} ${extra}" role="img" aria-label="${c.s}${l}"><span class="tl">${l}<i>${c.s}</i></span><span class="mid">${c.s}</span><span class="tl br">${l}<i>${c.s}</i></span></div>`;
-  }
-  // 変化したカードだけ描き直して、配るアニメーションを新しいカードにだけかける
-  function renderHand(el, cards, hiddenIdx = -1) {
-    const keys = cards.map((c, i) => (i === hiddenIdx ? "X" : label(c) + c.s));
-    const old = el._keys || [];
-    let keep = 0;
-    while (keep < old.length && keep < keys.length && old[keep] === keys[keep]) keep++;
-    while (el.children.length > keep) el.lastElementChild.remove();
-    for (let i = keep; i < keys.length; i++) el.insertAdjacentHTML("beforeend", cardHTML(cards[i], i === hiddenIdx));
-    el._keys = keys;
-  }
+        <!-- ROULETTE -->
+        <section class="table" id="v-roulette" aria-label="ルーレット" hidden>
+          <p class="printed big">Single zero · European wheel</p>
+          <div class="rl-top">
+            <div class="wheel-box"><canvas id="rl-wheel" width="240" height="240" aria-label="ルーレット盤"></canvas></div>
+            <div class="rl-side">
+              <div class="rl-result" id="rl-result">–</div>
+              <div class="history" id="rl-history" aria-label="これまでの出目"></div>
+            </div>
+          </div>
+          <p class="msg" id="rl-msg" aria-live="polite">チップを選んで、盤の上に置いてください。</p>
+          <div class="board-scroll"><div class="board" id="rl-board"></div></div>
+          <div class="betbar">
+            <div class="bet-amount">合計 <b id="rl-total">0</b><span>枚</span></div>
+            <div class="chips" id="rl-chips"></div>
+          </div>
+          <div class="controls">
+            <button class="btn" id="rl-spin" disabled>スピン</button>
+            <button class="btn ghost" id="rl-clear">賭けを外す</button>
+            <button class="btn ghost" id="rl-rebet" disabled>同じ賭け</button>
+          </div>
+          <details class="rules"><summary>配当</summary>
+            <p>数字ひとつ 36倍 ／ 赤・黒・偶数・奇数・1-18・19-36 2倍 ／ 1st・2nd・3rd 12 3倍（賭け金込みの払い戻し）。0に落ちると、0に賭けた分以外はすべて負けです。</p>
+          </details>
+        </section>
 
-  /* ---------- blackjack ---------- */
-  const BJ = { deck: newDeck(4), player: [], dealer: [], bet: 0, phase: "idle", busy: false };
-  const bj = {
-    dealer: $("#bj-dealer"), player: $("#bj-player"), dv: $("#bj-dv"), pv: $("#bj-pv"), msg: $("#bj-msg"),
-    deal: $("#bj-deal"), hit: $("#bj-hit"), stand: $("#bj-stand"), dbl: $("#bj-double"),
-  };
-  const bjBar = makeBetBar($("#bj-bet"));
-  const cv = c => (c.r === 14 ? 11 : Math.min(c.r, 10));
-  function hv(cs) {
-    let t = 0, a = 0;
-    for (const c of cs) { t += cv(c); if (c.r === 14) a++; }
-    while (t > 21 && a) { t -= 10; a--; }
-    return t;
-  }
-  const isBJ = cs => cs.length === 2 && hv(cs) === 21;
-  function settle(p, d) {
-    const pv = hv(p), dv = hv(d);
-    if (pv > 21) return "lose";
-    if (isBJ(p) && isBJ(d)) return "push";
-    if (isBJ(p)) return "blackjack";
-    if (isBJ(d)) return "lose";
-    if (dv > 21 || pv > dv) return "win";
-    return pv < dv ? "lose" : "push";
-  }
-  function bjRender() {
-    const hide = BJ.phase === "play" ? 1 : -1;
-    renderHand(bj.dealer, BJ.dealer, hide);
-    renderHand(bj.player, BJ.player);
-    bj.dv.textContent = !BJ.dealer.length ? "" : hide === 1 ? (BJ.dealer.length > 0 ? cv(BJ.dealer[0]) + " + ?" : "") : hv(BJ.dealer);
-    bj.pv.textContent = BJ.player.length ? hv(BJ.player) : "";
-    const playing = BJ.phase === "play" && !BJ.busy;
-    bj.hit.disabled = bj.stand.disabled = !playing;
-    bj.dbl.disabled = !(playing && BJ.player.length === 2 && balance >= BJ.bet);
-    bj.deal.disabled = BJ.phase === "play" || BJ.phase === "dealer" || BJ.busy;
-    bjBar.lock(BJ.phase === "play" || BJ.phase === "dealer" || BJ.busy);
-  }
-  async function bjDeal() {
-    const bet = bjBar.bet;
-    if (!checkBet(bet, bj.msg)) return;
-    if (BJ.deck.length < 15) BJ.deck = newDeck(4);
-    Object.assign(BJ, { bet, player: [], dealer: [], phase: "play", busy: true });
-    say(bj.msg, " ");
-    bjRender();
-    for (const who of ["player", "dealer", "player", "dealer"]) {
-      BJ[who].push(BJ.deck.pop());
-      bjRender();
-      await sleep(230);
-    }
-    BJ.busy = false;
-    if (isBJ(BJ.player) || isBJ(BJ.dealer)) return bjFinish();
-    say(bj.msg, "ヒットしますか？ スタンドしますか？");
-    bjRender();
-  }
-  function bjHit() {
-    BJ.player.push(BJ.deck.pop());
-    const v = hv(BJ.player);
-    if (v > 21) return bjFinish();
-    if (v === 21) return bjStand();
-    bjRender();
-  }
-  async function bjStand() {
-    BJ.phase = "dealer"; BJ.busy = true;
-    bjRender();
-    while (hv(BJ.dealer) < 17) {
-      await sleep(520);
-      BJ.dealer.push(BJ.deck.pop());
-      bjRender();
-    }
-    await sleep(250);
-    BJ.busy = false;
-    bjFinish();
-  }
-  function bjDouble() {
-    if (!take(BJ.bet)) return;
-    BJ.bet *= 2;
-    BJ.player.push(BJ.deck.pop());
-    bjRender();
-    if (hv(BJ.player) > 21) return bjFinish();
-    bjStand();
-  }
-  function bjFinish() {
-    BJ.phase = "done";
-    const o = settle(BJ.player, BJ.dealer);
-    const payout = Math.floor(BJ.bet * { blackjack: 2.5, win: 2, push: 1, lose: 0 }[o]);
-    pay(payout);
-    bjRender();
-    const head = {
-      blackjack: "ブラックジャック！",
-      win: hv(BJ.dealer) > 21 ? "ディーラーがバースト！" : "あなたの勝ち！",
-      push: "引き分け。",
-      lose: hv(BJ.player) > 21 ? "バースト…" : isBJ(BJ.dealer) ? "ディーラーのブラックジャック。" : "ディーラーの勝ち。",
-    }[o];
-    const [t, k] = resultText(BJ.bet, payout);
-    say(bj.msg, `${head} ${t}`, k);
-  }
-  bj.deal.onclick = bjDeal;
-  bj.hit.onclick = bjHit;
-  bj.stand.onclick = bjStand;
-  bj.dbl.onclick = bjDouble;
+        <!-- POKER -->
+        <section class="table" id="v-poker" aria-label="ビデオポーカー" hidden>
+          <p class="printed big">Jacks or better</p>
+          <div class="pk-hand" id="pk-hand"></div>
+          <p class="msg" id="pk-msg" aria-live="polite">配られた5枚から残すカードをタップして、1回だけ交換できます。</p>
+          <div class="controls"><button class="btn" id="pk-main">配る</button></div>
+          <table class="paytable" id="pk-pay" aria-label="配当表"></table>
+          <div class="betbar" id="pk-bet"></div>
+        </section>
 
-  /* ---------- slots ---------- */
-  const SYM = [["🍒", 30], ["🍋", 25], ["🔔", 20], ["⭐", 12], ["💎", 8], ["👑", 5]];
-  const THREE = { "🍒": 5, "🍋": 10, "🔔": 15, "⭐": 30, "💎": 75, "👑": 200 };
-  const reels = [...document.querySelectorAll(".reel")];
-  const slMsg = $("#sl-msg"), slBtn = $("#sl-spin"), slBar = makeBetBar($("#sl-bet"));
-  $("#sl-pay").innerHTML = Object.entries(THREE).map(([s, m]) => `<tr data-k="${s}"><td>${s}${s}${s}</td><td>×${m}</td></tr>`).join("")
-    + `<tr data-k="cherry2"><td>🍒が2つ</td><td>×2</td></tr>`;
-  function pick() {
-    let x = Math.random() * 100;
-    for (const [s, w] of SYM) if ((x -= w) < 0) return s;
-    return SYM[0][0];
-  }
-  function slotMult(r) {
-    if (r[0] === r[1] && r[1] === r[2]) return [THREE[r[0]], r[0]];
-    if (r.filter(s => s === "🍒").length === 2) return [2, "cherry2"];
-    return [0, null];
-  }
-  slBtn.onclick = async () => {
-    const bet = slBar.bet;
-    if (!checkBet(bet, slMsg)) return;
-    slBtn.disabled = true; slBar.lock(true);
-    say(slMsg, " ");
-    document.querySelectorAll("#sl-pay tr").forEach(tr => tr.classList.remove("hit"));
-    const res = [pick(), pick(), pick()];
-    const timers = reels.map(r => {
-      r.classList.remove("win"); r.classList.add("spinning");
-      return setInterval(() => { r.firstElementChild.textContent = SYM[Math.floor(Math.random() * SYM.length)][0]; }, 70);
-    });
-    for (let i = 0; i < 3; i++) {
-      await sleep(i === 0 ? 650 : 380);
-      clearInterval(timers[i]);
-      reels[i].classList.remove("spinning");
-      reels[i].firstElementChild.textContent = res[i];
-    }
-    const [mult, key] = slotMult(res);
-    const payout = bet * mult;
-    pay(payout);
-    if (mult) {
-      reels.forEach((r, i) => { if (key !== "cherry2" || res[i] === "🍒") r.classList.add("win"); });
-      $(`#sl-pay tr[data-k="${key}"]`).classList.add("hit");
-    }
-    const [t, k] = resultText(bet, payout);
-    say(slMsg, mult ? `×${mult}！ ${t}` : t, k);
-    slBtn.disabled = false; slBar.lock(false);
-  };
+  </main>
+  <p class="foot">本物のお金は使いません。チップはゲームの中だけのものです。</p>
+</section>
 
-  /* ---------- roulette ---------- */
-  const WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
-  const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
-  const colorOf = n => (n === 0 ? "z" : RED.has(n) ? "r" : "b");
-  const RET = { n: 36, red: 2, black: 2, even: 2, odd: 2, low: 2, high: 2, dozen: 3 };
-  function rWins(key, n) {
-    const [t, v] = key.split(":");
-    if (t === "n") return n === +v;
-    if (n === 0) return false;
-    return { red: RED.has(n), black: !RED.has(n), even: n % 2 === 0, odd: n % 2 === 1, low: n <= 18, high: n >= 19, dozen: Math.ceil(n / 12) === +v }[t];
-  }
-  const board = $("#rl-board");
-  {
-    let h = `<button class="cell z" data-k="n:0" style="grid-column:1;grid-row:1 / span 3" aria-label="0">0</button>`;
-    for (let row = 0; row < 3; row++) for (let col = 0; col < 12; col++) {
-      const n = col * 3 + (3 - row);
-      h += `<button class="cell ${colorOf(n)}" data-k="n:${n}" style="grid-column:${col + 2};grid-row:${row + 1}">${n}</button>`;
-    }
-    [1, 2, 3].forEach(d => {
-      h += `<button class="cell out" data-k="dozen:${d}" style="grid-column:${2 + (d - 1) * 4} / span 4;grid-row:4">${(d - 1) * 12 + 1}–${d * 12}</button>`;
-    });
-    [["low", "1–18"], ["even", "偶数"], ["red", "赤"], ["black", "黒"], ["odd", "奇数"], ["high", "19–36"]].forEach(([k, l], i) => {
-      const cls = k === "red" ? " r" : k === "black" ? " b" : "";
-      h += `<button class="cell out${cls}" data-k="${k}" style="grid-column:${2 + i * 2} / span 2;grid-row:5">${l}</button>`;
-    });
-    board.innerHTML = h;
-  }
-  let rlDenom = 10, rlBusy = false, rlLast = null, wheelRot = 0;
-  const rlBets = {}, rlHistory = [];
-  const rl = { msg: $("#rl-msg"), total: $("#rl-total"), spin: $("#rl-spin"), clear: $("#rl-clear"), rebet: $("#rl-rebet"), chips: $("#rl-chips"), res: $("#rl-result"), hist: $("#rl-history"), wheel: $("#rl-wheel") };
-  rl.chips.innerHTML = chipsHTML(v => `aria-pressed="${v === rlDenom}" aria-label="${v}枚チップを選ぶ"`);
-  rl.chips.onclick = e => {
-    const b = e.target.closest(".chip");
-    if (!b) return;
-    rlDenom = +b.dataset.v;
-    rl.chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
-  };
-  const rlSum = () => Object.values(rlBets).reduce((a, b) => a + b, 0);
-  function rlRender(wonKeys = new Set()) {
-    board.querySelectorAll(".cell").forEach(c => {
-      const amt = rlBets[c.dataset.k];
-      let s = c.querySelector(".stake");
-      if (!amt) { s && s.remove(); return; }
-      if (!s) { s = document.createElement("span"); s.className = "stake"; c.appendChild(s); }
-      s.textContent = amt;
-      s.classList.toggle("won", wonKeys.has(c.dataset.k));
-    });
-    rl.total.textContent = rlSum();
-    rl.spin.disabled = rlBusy || rlSum() === 0;
-    rl.clear.disabled = rlBusy;
-    rl.rebet.disabled = rlBusy || !rlLast;
-  }
-  board.onclick = e => {
-    const c = e.target.closest(".cell");
-    if (!c || rlBusy) return;
-    if (rl.msg.classList.contains("win") || rl.msg.classList.contains("lose") || rl.msg.classList.contains("push")) {
-      board.querySelectorAll(".landed").forEach(x => x.classList.remove("landed"));
-      for (const k in rlBets) delete rlBets[k];
-      say(rl.msg, " ");
-    }
-    if (rlSum() + rlDenom > balance) return say(rl.msg, "チップが足りません。", "lose");
-    rlBets[c.dataset.k] = (rlBets[c.dataset.k] || 0) + rlDenom;
-    rlRender();
-  };
-  rl.clear.onclick = () => {
-    for (const k in rlBets) delete rlBets[k];
-    board.querySelectorAll(".landed").forEach(x => x.classList.remove("landed"));
-    say(rl.msg, "チップを選んで、盤の上に置いてください。");
-    rlRender();
-  };
-  rl.rebet.onclick = () => {
-    const total = Object.values(rlLast).reduce((a, b) => a + b, 0);
-    if (total > balance) return say(rl.msg, "同じ賭けをするにはチップが足りません。", "lose");
-    for (const k in rlBets) delete rlBets[k];
-    Object.assign(rlBets, rlLast);
-    board.querySelectorAll(".landed").forEach(x => x.classList.remove("landed"));
-    say(rl.msg, "前回と同じ賭けを置きました。");
-    rlRender();
-  };
-  function drawWheel() {
-    const cvs = rl.wheel, S = 240, dpr = window.devicePixelRatio || 1;
-    cvs.width = S * dpr; cvs.height = S * dpr;
-    const g = cvs.getContext("2d");
-    g.scale(dpr, dpr);
-    const c = S / 2, R = S / 2 - 2, seg = (2 * Math.PI) / 37;
-    g.fillStyle = "#3a2417"; g.beginPath(); g.arc(c, c, R, 0, 2 * Math.PI); g.fill();
-    WHEEL.forEach((n, i) => {
-      const a0 = -Math.PI / 2 + i * seg - seg / 2;
-      g.beginPath();
-      g.arc(c, c, R - 8, a0, a0 + seg);
-      g.arc(c, c, R * 0.6, a0 + seg, a0, true);
-      g.closePath();
-      g.fillStyle = n === 0 ? "#1f7a52" : RED.has(n) ? "#c7372c" : "#1f1b16";
-      g.fill();
-      g.strokeStyle = "rgba(226,182,92,.6)"; g.lineWidth = 1; g.stroke();
-      g.save();
-      g.translate(c, c);
-      g.rotate(a0 + seg / 2 + Math.PI / 2);
-      g.fillStyle = "#f7f0e1";
-      g.font = "600 10px 'IBM Plex Mono', monospace";
-      g.textAlign = "center";
-      g.fillText(String(n), 0, -(R - 20));
-      g.restore();
-    });
-    const hub = g.createRadialGradient(c - 10, c - 10, 4, c, c, R * 0.6);
-    hub.addColorStop(0, "#f2d38f"); hub.addColorStop(1, "#7a5418");
-    g.fillStyle = hub; g.beginPath(); g.arc(c, c, R * 0.58, 0, 2 * Math.PI); g.fill();
-    g.fillStyle = "#3a2417"; g.beginPath(); g.arc(c, c, R * 0.16, 0, 2 * Math.PI); g.fill();
-  }
-  function spinWheelTo(n) {
-    const seg = 360 / 37, i = WHEEL.indexOf(n);
-    const target = (360 - i * seg) % 360;
-    let next = wheelRot - (wheelRot % 360) + 360 * 5 + target;
-    if (next - wheelRot < 360 * 4) next += 360;
-    wheelRot = next;
-    rl.wheel.style.transform = `rotate(${next}deg)`;
-    return sleep(4300);
-  }
-  rl.spin.onclick = async () => {
-    const total = rlSum();
-    if (!total || !take(total)) return;
-    rlBusy = true; rlLast = { ...rlBets };
-    board.querySelectorAll(".landed").forEach(x => x.classList.remove("landed"));
-    say(rl.msg, "ボールが回っています…");
-    rlRender();
-    const n = Math.floor(Math.random() * 37);
-    await spinWheelTo(n);
-    let payout = 0;
-    const won = new Set();
-    for (const [k, a] of Object.entries(rlBets)) if (rWins(k, n)) { payout += a * RET[k.split(":")[0]]; won.add(k); }
-    pay(payout);
-    rl.res.textContent = n;
-    rl.res.className = "rl-result " + colorOf(n);
-    rlHistory.unshift(n); rlHistory.length = Math.min(rlHistory.length, 14);
-    rl.hist.innerHTML = rlHistory.map(x => `<span class="${colorOf(x)}">${x}</span>`).join("");
-    board.querySelector(`[data-k="n:${n}"]`).classList.add("landed");
-    const name = { z: "緑", r: "赤", b: "黒" }[colorOf(n)];
-    const [t, k] = resultText(total, payout);
-    say(rl.msg, `${n}（${name}）！ ${t}`, k);
-    rlBusy = false;
-    rlRender(won);
-  };
-  drawWheel();
-  rlRender();
-
-  /* ---------- video poker ---------- */
-  const PT = [["ロイヤルストレートフラッシュ", 250], ["ストレートフラッシュ", 50], ["フォーカード", 25], ["フルハウス", 9], ["フラッシュ", 6], ["ストレート", 4], ["スリーカード", 3], ["ツーペア", 2], ["ワンペア（J以上）", 1]];
-  function evalPoker(cs) {
-    const counts = {};
-    cs.forEach(c => (counts[c.r] = (counts[c.r] || 0) + 1));
-    const freq = Object.values(counts).sort((a, b) => b - a).join("");
-    const uniq = Object.keys(counts).map(Number).sort((a, b) => a - b);
-    const flush = new Set(cs.map(c => c.s)).size === 1;
-    const straight = uniq.length === 5 && (uniq[4] - uniq[0] === 4 || uniq.join() === "2,3,4,5,14");
-    if (straight && flush) return uniq[0] === 10 ? 0 : 1;
-    if (freq === "41") return 2;
-    if (freq === "32") return 3;
-    if (flush) return 4;
-    if (straight) return 5;
-    if (freq === "311") return 6;
-    if (freq === "221") return 7;
-    if (freq === "2111") return +Object.keys(counts).find(r => counts[r] === 2) >= 11 ? 8 : -1;
-    return -1;
-  }
-  const PK = { deck: [], hand: [], held: [], phase: "idle", bet: 0 };
-  const pk = { hand: $("#pk-hand"), msg: $("#pk-msg"), main: $("#pk-main"), pay: $("#pk-pay") };
-  const pkBar = makeBetBar($("#pk-bet"));
-  pk.pay.innerHTML = PT.map(([n, m], i) => `<tr data-i="${i}"><td>${n}</td><td>×${m}</td></tr>`).join("");
-  function pkRender(stay = []) {
-    if (!PK.hand.length) {
-      pk.hand.innerHTML = Array.from({ length: 5 }, () => `<div class="pk-slot">${cardHTML(null, true, "stay")}<span class="tag">HOLD</span></div>`).join("");
-    } else {
-      pk.hand.innerHTML = PK.hand.map((c, i) =>
-        `<button class="pk-slot" data-i="${i}" aria-pressed="${PK.held[i]}" ${PK.phase !== "draw" ? "disabled" : ""}>${cardHTML(c, false, stay[i] ? "stay" : "")}<span class="tag">HOLD</span></button>`
-      ).join("");
-    }
-    pk.main.textContent = PK.phase === "draw" ? "交換する" : "配る";
-    pkBar.lock(PK.phase === "draw");
-  }
-  function markPay(i) {
-    pk.pay.querySelectorAll("tr").forEach(tr => tr.classList.toggle("hit", +tr.dataset.i === i));
-  }
-  pk.hand.onclick = e => {
-    const b = e.target.closest("button.pk-slot");
-    if (!b || PK.phase !== "draw") return;
-    const i = +b.dataset.i;
-    PK.held[i] = !PK.held[i];
-    b.setAttribute("aria-pressed", String(PK.held[i]));
-  };
-  pk.main.onclick = () => {
-    if (PK.phase !== "draw") {
-      const bet = pkBar.bet;
-      if (!checkBet(bet, pk.msg)) return;
-      PK.bet = bet; PK.deck = newDeck(); PK.hand = Array.from({ length: 5 }, () => PK.deck.pop());
-      PK.held = [false, false, false, false, false]; PK.phase = "draw";
-      pkRender();
-      const i = evalPoker(PK.hand);
-      markPay(i);
-      say(pk.msg, `今の役: ${i >= 0 ? PT[i][0] : "役なし"}。残すカードをタップして「交換する」。`);
-    } else {
-      const stay = PK.held.slice();
-      PK.hand = PK.hand.map((c, i) => (PK.held[i] ? c : PK.deck.pop()));
-      PK.phase = "done";
-      pkRender(stay);
-      const i = evalPoker(PK.hand);
-      markPay(i);
-      const payout = i >= 0 ? PK.bet * PT[i][1] : 0;
-      pay(payout);
-      const [t, k] = resultText(PK.bet, payout);
-      say(pk.msg, `${i >= 0 ? PT[i][0] : "役なし"}。 ${t}`, k);
-    }
-  };
-  pkRender();
-
-  /* ---------- tabs ---------- */
-  const GAMES = ["blackjack", "slots", "roulette", "poker"];
-  function show() {
-    const h = location.hash.slice(1);
-    const g = GAMES.includes(h) ? h : "blackjack";
-    GAMES.forEach(x => { $("#g-" + x).hidden = x !== g; });
-    document.querySelectorAll(".tabs a").forEach(a => {
-      if (a.dataset.game === g) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
-    });
-  }
-  addEventListener("hashchange", show);
-  show();
-  setBalance(balance);
-})();
-</script>
+<!-- firebase:start -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- firebase:end -->
+<script src="js/firebase-config.js"></script>
+<script src="js/backend.js"></script>
+<script src="js/games.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

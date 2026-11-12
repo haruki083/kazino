@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// KAZINO の Firestore セキュリティルール。
+// Firebase コンソール → Firestore Database → ルール に貼り付けて「公開」してください。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      // ランキング表示のため、ログインしている人は全員の名前とチップ数を読める
+      allow read: if request.auth != null;
+      // 自分のデータだけ作れる。最初のチップは 1000 枚
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.balance == 1000
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 12;
+      // 自分のデータだけ更新できる。名前は変えられない
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.balance is int
+        && request.resource.data.balance >= 0
+        && request.resource.data.name == resource.data.name;
+      allow delete: if false;
+    }
+  }
+}
