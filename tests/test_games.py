@@ -127,11 +127,22 @@ class PokerTest(unittest.TestCase):
         self.check(["10♠", "10♥", "2♦", "5♣", "9♠"], poker.NOTHING)
         self.check(["Q♠", "K♥", "A♦", "2♣", "3♠"], poker.NOTHING)
 
-    def test_parse_holds(self):
-        self.assertEqual(poker.parse_holds("1 3 5"), {0, 2, 4})
-        self.assertEqual(poker.parse_holds("24"), {1, 3})
-        self.assertEqual(poker.parse_holds(""), set())
-        self.assertIsNone(poker.parse_holds("6"))
+    def test_parse_positions(self):
+        self.assertEqual(poker.parse_positions("1 3 5"), {0, 2, 4})
+        self.assertEqual(poker.parse_positions("24"), {1, 3})
+        self.assertEqual(poker.parse_positions(""), set())
+        self.assertIsNone(poker.parse_positions("6"))
+
+    def test_only_chosen_cards_are_swapped(self):
+        w = Wallet(balance=100, path=Path("unused.json"))
+        deck = Deck(random.Random(3))
+        shown = []
+        with patch("builtins.input", return_value="2 4"), patch.object(poker, "_show", side_effect=lambda c, *a: shown.append(list(c))):
+            poker.play_round(w, deck, 10)
+        before, after = shown
+        self.assertEqual([before[i] for i in (0, 2, 4)], [after[i] for i in (0, 2, 4)])
+        self.assertNotEqual(before[1], after[1])
+        self.assertNotEqual(before[3], after[3])
 
 
 if __name__ == "__main__":

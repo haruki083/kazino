@@ -402,9 +402,9 @@ body {
 .pk-hand { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--cw) * 1.4 + 30px); }
 .pk-slot { font: inherit; background: none; border: 0; padding: 0; color: inherit; display: grid; gap: 6px; justify-items: center; cursor: pointer; }
 .pk-slot:disabled { cursor: default; }
-.pk-slot .tag { font-size: 11px; font-weight: 700; letter-spacing: .15em; color: var(--ink); background: var(--brass); padding: 1px 8px; border-radius: 4px; visibility: hidden; }
+.pk-slot .tag { font-size: 11px; font-weight: 700; letter-spacing: .15em; color: #fff; background: var(--red); padding: 1px 8px; border-radius: 4px; visibility: hidden; }
 .pk-slot[aria-pressed="true"] .tag { visibility: visible; }
-.pk-slot[aria-pressed="true"] .card { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--brass), 0 8px 12px rgba(0,0,0,.4); }
+.pk-slot[aria-pressed="true"] .card { transform: translateY(-8px) rotate(-3deg); opacity: .55; box-shadow: 0 0 0 3px var(--red), 0 8px 12px rgba(0,0,0,.4); }
 .pk-slot .card { transition: transform .15s; }
 
 details.rules { font-size: 14px; color: var(--mist); max-width: 62ch; margin: 0 auto; }

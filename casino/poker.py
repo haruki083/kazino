@@ -55,18 +55,18 @@ def evaluate(cards: list[Card]) -> tuple[str, int]:
     return NOTHING
 
 
-def parse_holds(text: str) -> set[int] | None:
-    """'1 3 5' や '135' を残すカードの位置 {0, 2, 4} に変換する。不正なら None。"""
+def parse_positions(text: str) -> set[int] | None:
+    """'2 4' や '24' をカードの位置 {1, 3} に変換する。不正なら None。"""
     digits = text.replace(",", " ").replace(" ", "")
     if not all(ch in "12345" for ch in digits):
         return None
     return {int(ch) - 1 for ch in digits}
 
 
-def _show(cards: list[Card], holds: set[int] = frozenset()) -> None:
+def _show(cards: list[Card], swaps: set[int] = frozenset()) -> None:
     print("  " + "  ".join(f"[{i + 1}]{c}" for i, c in enumerate(cards)))
-    if holds:
-        print("  残す: " + " ".join(str(i + 1) for i in sorted(holds)))
+    if swaps:
+        print("  交換: " + " ".join(str(i + 1) for i in sorted(swaps)))
 
 
 def play_round(wallet: Wallet, deck: Deck, bet: int) -> tuple[str, int]:
@@ -77,11 +77,11 @@ def play_round(wallet: Wallet, deck: Deck, bet: int) -> tuple[str, int]:
     _show(hand)
     print(f"  今の役: {evaluate(hand)[0]}")
     while True:
-        holds = parse_holds(input("  残すカードの番号（例: 1 3 5、空欄で全部交換）: "))
-        if holds is not None:
+        swaps = parse_positions(input("  交換するカードの番号（例: 2 4、空欄なら交換しない）: "))
+        if swaps is not None:
             break
         print("  1〜5 の数字で入力してください。")
-    hand = [c if i in holds else deck.draw() for i, c in enumerate(hand)]
+    hand = [deck.draw() if i in swaps else c for i, c in enumerate(hand)]
     print("\n  交換後:")
     _show(hand)
     name, mult = evaluate(hand)
@@ -94,7 +94,7 @@ def play_round(wallet: Wallet, deck: Deck, bet: int) -> tuple[str, int]:
 
 def play(wallet: Wallet, rng: random.Random | None = None) -> None:
     ui.title("🃏 ビデオポーカー 🃏")
-    print("  5枚配られたら、残したいカードを選んで1回だけ交換できます。")
+    print("  5枚配られたら、交換したいカードを選んで1回だけ交換できます。")
     print("  配当（賭け金に対する倍率）:")
     for name, mult in PAYTABLE:
         print(f"    {ui.pad(name, 30)} x{mult}")

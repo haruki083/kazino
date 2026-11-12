@@ -468,19 +468,19 @@ window.KazinoGames.start = () => {
     if (freq === "2111") return +Object.keys(counts).find(r => counts[r] === 2) >= 11 ? 8 : -1;
     return -1;
   }
-  const PK = { deck: [], hand: [], held: [], phase: "idle", bet: 0 };
+  const PK = { deck: [], hand: [], swap: [], phase: "idle", bet: 0 }; // swap[i] = そのカードを交換するか
   const pk = { hand: $("#pk-hand"), msg: $("#pk-msg"), main: $("#pk-main"), pay: $("#pk-pay") };
   const pkBar = makeBetBar($("#pk-bet"));
   pk.pay.innerHTML = PT.map(([n, m], i) => `<tr data-i="${i}"><td>${n}</td><td>×${m}</td></tr>`).join("");
   function pkRender(stay = []) {
     if (!PK.hand.length) {
-      pk.hand.innerHTML = Array.from({ length: 5 }, () => `<div class="pk-slot">${cardHTML(null, true, "stay")}<span class="tag">HOLD</span></div>`).join("");
+      pk.hand.innerHTML = Array.from({ length: 5 }, () => `<div class="pk-slot">${cardHTML(null, true, "stay")}<span class="tag">交換</span></div>`).join("");
     } else {
       pk.hand.innerHTML = PK.hand.map((c, i) =>
-        `<button class="pk-slot" data-i="${i}" aria-pressed="${PK.held[i]}" ${PK.phase !== "draw" ? "disabled" : ""}>${cardHTML(c, false, stay[i] ? "stay" : "")}<span class="tag">HOLD</span></button>`
+        `<button class="pk-slot" data-i="${i}" aria-pressed="${PK.swap[i]}" aria-label="${i + 1}枚目を交換する" ${PK.phase !== "draw" ? "disabled" : ""}>${cardHTML(c, false, stay[i] ? "stay" : "")}<span class="tag">交換</span></button>`
       ).join("");
     }
-    pk.main.textContent = PK.phase === "draw" ? "交換する" : "配る";
+    pk.main.textContent = PK.phase === "draw" ? "交換しないで勝負" : "配る";
     pkBar.lock(PK.phase === "draw");
   }
   function markPay(i) {
@@ -490,22 +490,24 @@ window.KazinoGames.start = () => {
     const b = e.target.closest("button.pk-slot");
     if (!b || PK.phase !== "draw") return;
     const i = +b.dataset.i;
-    PK.held[i] = !PK.held[i];
-    b.setAttribute("aria-pressed", String(PK.held[i]));
+    PK.swap[i] = !PK.swap[i];
+    b.setAttribute("aria-pressed", String(PK.swap[i]));
+    const n = PK.swap.filter(Boolean).length;
+    pk.main.textContent = n ? `${n}枚を交換する` : "交換しないで勝負";
   };
   pk.main.onclick = () => {
     if (PK.phase !== "draw") {
       const bet = pkBar.bet;
       if (!checkBet(bet, pk.msg)) return;
       PK.bet = bet; PK.deck = newDeck(); PK.hand = Array.from({ length: 5 }, () => PK.deck.pop());
-      PK.held = [false, false, false, false, false]; PK.phase = "draw";
+      PK.swap = [false, false, false, false, false]; PK.phase = "draw";
       pkRender();
       const i = evalPoker(PK.hand);
       markPay(i);
-      say(pk.msg, `今の役: ${i >= 0 ? PT[i][0] : "役なし"}。残すカードをタップして「交換する」。`);
+      say(pk.msg, `今の役: ${i >= 0 ? PT[i][0] : "役なし"}。交換したいカードをタップして選んでください。`);
     } else {
-      const stay = PK.held.slice();
-      PK.hand = PK.hand.map((c, i) => (PK.held[i] ? c : PK.deck.pop()));
+      const stay = PK.swap.map(x => !x);
+      PK.hand = PK.hand.map((c, i) => (PK.swap[i] ? PK.deck.pop() : c));
       PK.phase = "done";
       pkRender(stay);
       const i = evalPoker(PK.hand);
