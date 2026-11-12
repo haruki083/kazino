@@ -125,6 +125,9 @@
     "auth/too-many-requests": "試行回数が多すぎます。しばらく待ってからもう一度お試しください。",
     "auth/network-request-failed": "インターネットにつながっていません。接続を確認してください。",
     "auth/operation-not-allowed": "Firebase でメール/パスワードのログインが有効になっていません（README の手順を確認してください）。",
+    "auth/configuration-not-found": "Firebase の Authentication がまだ準備されていません（README の手順を確認してください）。",
+    "unavailable": "データベースにつながりません。Firestore Database が作成されているか確認してください。",
+    "failed-precondition": "Firestore Database がまだ作成されていません（README の手順を確認してください）。",
     "permission-denied": "データベースに拒否されました。Firestore のルールを確認してください（README の手順を確認してください）。",
   };
   const message = e => MESSAGES[e && e.code] || `エラーが発生しました（${(e && (e.code || e.message)) || "不明"}）`;
