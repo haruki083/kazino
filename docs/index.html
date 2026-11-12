@@ -124,6 +124,14 @@
           <div class="art art-pk" aria-hidden="true"><span class="mini">10♦</span><span class="mini">J♦</span><span class="mini">Q♦</span><span class="mini">K♦</span><span class="mini">A♦</span></div>
           <strong>ビデオポーカー</strong><span>ジャックス・オア・ベター</span><em>MIN 10</em>
         </a>
+        <a class="tile" href="#baccarat">
+          <div class="art art-bac" aria-hidden="true"><span class="mini red">9♦</span><span class="mini">8♣</span></div>
+          <strong>バカラ</strong><span>プレイヤーかバンカーか</span><em>MIN 10</em>
+        </a>
+        <a class="tile" href="#keno">
+          <div class="art art-keno" aria-hidden="true"><span>7</span><span class="on">23</span><span>41</span><span class="on">58</span><span>80</span></div>
+          <strong>キノ</strong><span>80個から20個の抽選</span><em>MIN 10</em>
+        </a>
         <a class="tile tile-rank" href="#ranking">
           <div class="art art-rk" aria-hidden="true">TOP 10</div>
           <strong>ハイローラーズ</strong><span>総チップ・ゲーム別ランキング</span><em>VIP</em>
@@ -139,6 +147,8 @@
         <button type="button" role="tab" data-kind="slots" aria-selected="false">スロット</button>
         <button type="button" role="tab" data-kind="roulette" aria-selected="false">ルーレット</button>
         <button type="button" role="tab" data-kind="poker" aria-selected="false">ポーカー</button>
+        <button type="button" role="tab" data-kind="baccarat" aria-selected="false">バカラ</button>
+        <button type="button" role="tab" data-kind="keno" aria-selected="false">キノ</button>
       </div>
       <p class="rank-caption" id="rank-caption"></p>
       <div class="rank-scroll">
@@ -225,6 +235,59 @@
           <div class="betbar" id="pk-bet"></div>
         </section>
 
+
+      <!-- BACCARAT -->
+      <section class="table" id="v-baccarat" aria-label="バカラ" hidden>
+        <p class="printed big">Punto banco</p>
+        <div class="bac-hands">
+          <div class="bac-side bac-player" id="bac-pside">
+            <div class="seat-label">プレイヤー <span class="val" id="bac-pv"></span></div>
+            <div class="hand" id="bac-player"></div>
+          </div>
+          <div class="bac-side bac-banker" id="bac-bside">
+            <div class="seat-label">バンカー <span class="val" id="bac-bv"></span></div>
+            <div class="hand" id="bac-banker"></div>
+          </div>
+        </div>
+        <p class="msg" id="bac-msg" aria-live="polite">チップを選んで、プレイヤー・タイ・バンカーのどれかに置いてください。</p>
+        <div class="bac-spots" id="bac-spots">
+          <button class="bac-spot p" data-k="player"><strong>プレイヤー</strong><span>×2</span></button>
+          <button class="bac-spot t" data-k="tie"><strong>タイ</strong><span>×9</span></button>
+          <button class="bac-spot b" data-k="banker"><strong>バンカー</strong><span>×1.95</span></button>
+        </div>
+        <p class="printed">Banker pays 19 to 20 · Tie pays 8 to 1</p>
+        <div class="betbar">
+          <div class="bet-amount">合計 <b id="bac-total">0</b><span>枚</span></div>
+          <div class="chips" id="bac-chips"></div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="bac-deal" disabled>配る</button>
+          <button class="btn ghost" id="bac-clear">賭けを外す</button>
+          <button class="btn ghost" id="bac-rebet" disabled>同じ賭け</button>
+        </div>
+        <div class="road-box">
+          <p class="road-title">罫線（これまでの結果）</p>
+          <div class="road" id="bac-road"></div>
+        </div>
+        <details class="rules"><summary>ルール</summary>
+          <p>プレイヤーとバンカーのどちらが9に近いかを当てます。A は1、10・J・Q・K は0、ほかは数字どおりで、合計の一の位が点数です（7＋8＝15 なら5点）。最初の2枚で8か9ならナチュラルでそこで勝負。そうでなければ、決まったルールで3枚目を引くかが自動で決まります。プレイヤーは2倍、バンカーは手数料5%を引いた1.95倍、タイ（同点）は9倍の払い戻し。タイのときは、プレイヤーとバンカーへの賭けはそのまま戻ります。</p>
+        </details>
+      </section>
+
+      <!-- KENO -->
+      <section class="table" id="v-keno" aria-label="キノ" hidden>
+        <p class="printed big">Keno · 20 balls from 80</p>
+        <p class="keno-status" id="keno-status" aria-live="polite"></p>
+        <div class="keno-board" id="keno-board"></div>
+        <p class="msg" id="keno-msg" aria-live="polite">1〜80から、好きな数字を1〜10個選んでください。</p>
+        <div class="controls">
+          <button class="btn" id="keno-draw" disabled>抽選する</button>
+          <button class="btn ghost" id="keno-quick">おまかせで選ぶ</button>
+          <button class="btn ghost" id="keno-clear">選び直す</button>
+        </div>
+        <table class="paytable" id="keno-pay" aria-label="配当表"></table>
+        <div class="betbar" id="keno-bet"></div>
+      </section>
   </main>
   <p class="foot">本物のお金は使いません。チップはゲームの中だけのものです。</p>
 </section>

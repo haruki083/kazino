@@ -8,7 +8,7 @@
 
   const W = window.Wallet;
   const backend = window.createKazinoBackend();
-  const GAMES = ["blackjack", "slots", "roulette", "poker"];
+  const GAMES = ["blackjack", "slots", "roulette", "poker", "baccarat", "keno"];
   const VIEWS = ["lobby", "ranking", ...GAMES];
   const START = 1000, DAILY_BONUS = 500, MIN_BET = 10;
   // 会員ランク: [この枚数以上, 名前, CSSクラス]。いま持っているチップで決まる（上から順に判定）
@@ -39,7 +39,7 @@
     const view = currentView();
     VIEWS.forEach(v => { $("#v-" + v).hidden = v !== view; });
     $("#crumb").hidden = view === "lobby";
-    $("#crumb-title").textContent = { lobby: "", ranking: "ハイローラーズ", blackjack: "ブラックジャック", slots: "スロット", roulette: "ルーレット", poker: "ビデオポーカー" }[view];
+    $("#crumb-title").textContent = { lobby: "", ranking: "ハイローラーズ", blackjack: "ブラックジャック", slots: "スロット", roulette: "ルーレット", poker: "ビデオポーカー", baccarat: "バカラ", keno: "キノ" }[view];
     if (view === "ranking") loadRanking();
     if (view === "lobby") renderLobby();
     window.scrollTo(0, 0);
@@ -122,7 +122,7 @@
   };
 
   /* ---------- ランキング ---------- */
-  const GAME_NAMES = { blackjack: "ブラックジャック", slots: "スロット", roulette: "ルーレット", poker: "ビデオポーカー" };
+  const GAME_NAMES = { blackjack: "ブラックジャック", slots: "スロット", roulette: "ルーレット", poker: "ビデオポーカー", baccarat: "バカラ", keno: "キノ" };
   const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n).toLocaleString("ja-JP");
   let rankKind = "total";
   document.querySelectorAll(".rank-tabs button").forEach(b => {

@@ -6,7 +6,7 @@
 (() => {
   const START = 1000;
   const FIELDS = ["name", "nameKey", "balance", "memberNo", "played", "wins", "biggestWin", "lastBonus", "games"];
-  const GAME_IDS = ["blackjack", "slots", "roulette", "poker"];
+  const GAME_IDS = ["blackjack", "slots", "roulette", "poker", "baccarat", "keno"];
   // ゲームごとの記録: net = 収支（払い戻し − 賭け金の合計）、played = プレイ回数、wins = 勝った回数
   const emptyGames = () => Object.fromEntries(GAME_IDS.map(g => [g, { net: 0, played: 0, wins: 0 }]));
   // 古いデータに games がなくても動くようにそろえる

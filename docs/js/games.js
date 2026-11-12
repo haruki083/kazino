@@ -520,4 +520,223 @@ window.KazinoGames.start = () => {
     }
   };
   pkRender();
+
+  /* ---------- baccarat ---------- */
+  const BAC_RET = { player: 2, banker: 1.95, tie: 9 }; // 払い戻し倍率（賭け金込み）
+  const BAC_NAMES = { player: "プレイヤー", banker: "バンカー", tie: "タイ" };
+  const bacVal = c => (c.r === 14 ? 1 : c.r >= 10 ? 0 : c.r);
+  const bacTotal = cs => cs.reduce((a, c) => a + bacVal(c), 0) % 10;
+  // プレイヤーが3枚目を引いたかどうかと、その札で、バンカーが3枚目を引くかが決まる
+  function bankerDraws(bt, p3) {
+    if (!p3) return bt <= 5;
+    const x = bacVal(p3);
+    if (bt <= 2) return true;
+    if (bt === 3) return x !== 8;
+    if (bt === 4) return x >= 2 && x <= 7;
+    if (bt === 5) return x >= 4 && x <= 7;
+    if (bt === 6) return x === 6 || x === 7;
+    return false;
+  }
+  const bac = {
+    pv: $("#bac-pv"), bv: $("#bac-bv"), player: $("#bac-player"), banker: $("#bac-banker"),
+    pside: $("#bac-pside"), bside: $("#bac-bside"), msg: $("#bac-msg"), spots: $("#bac-spots"),
+    total: $("#bac-total"), chips: $("#bac-chips"), deal: $("#bac-deal"), clear: $("#bac-clear"),
+    rebet: $("#bac-rebet"), road: $("#bac-road"),
+  };
+  let bacDeck = newDeck(8), bacDenom = 10, bacBusy = false, bacLast = null, bacDone = false;
+  const bacBets = {}, bacRoad = [];
+  bac.chips.innerHTML = chipsHTML(v => `aria-pressed="${v === bacDenom}" aria-label="${v}枚チップを選ぶ"`);
+  bac.chips.onclick = e => {
+    const b = e.target.closest(".chip");
+    if (!b) return;
+    bacDenom = +b.dataset.v;
+    bac.chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
+  };
+  const bacSum = () => Object.values(bacBets).reduce((a, b) => a + b, 0);
+  function bacRender(won = new Set()) {
+    bac.spots.querySelectorAll(".bac-spot").forEach(sp => {
+      const amt = bacBets[sp.dataset.k];
+      let st = sp.querySelector(".stake");
+      if (!amt) { if (st) st.remove(); return; }
+      if (!st) { st = document.createElement("span"); st.className = "stake"; sp.appendChild(st); }
+      st.textContent = amt;
+      st.classList.toggle("won", won.has(sp.dataset.k));
+    });
+    bac.total.textContent = bacSum();
+    bac.deal.disabled = bacBusy || bacSum() === 0;
+    bac.clear.disabled = bacBusy;
+    bac.rebet.disabled = bacBusy || !bacLast;
+    bac.road.innerHTML = bacRoad.map(r => `<span class="${r}" title="${BAC_NAMES[r]}">${{ player: "P", banker: "B", tie: "T" }[r]}</span>`).join("");
+  }
+  function bacReset() {
+    for (const k in bacBets) delete bacBets[k];
+    bacDone = false;
+    bac.pside.classList.remove("win"); bac.bside.classList.remove("win");
+  }
+  bac.spots.onclick = e => {
+    const sp = e.target.closest(".bac-spot");
+    if (!sp || bacBusy) return;
+    if (bacDone) { bacReset(); say(bac.msg, " "); }
+    if (bacSum() + bacDenom > W.balance) return say(bac.msg, "チップが足りません。", "lose");
+    bacBets[sp.dataset.k] = (bacBets[sp.dataset.k] || 0) + bacDenom;
+    bacRender();
+  };
+  bac.clear.onclick = () => { bacReset(); say(bac.msg, "チップを選んで、プレイヤー・タイ・バンカーのどれかに置いてください。"); bacRender(); };
+  bac.rebet.onclick = () => {
+    const total = Object.values(bacLast).reduce((a, b) => a + b, 0);
+    if (total > W.balance) return say(bac.msg, "同じ賭けをするにはチップが足りません。", "lose");
+    bacReset();
+    Object.assign(bacBets, bacLast);
+    say(bac.msg, "前回と同じ賭けを置きました。");
+    bacRender();
+  };
+  bac.deal.onclick = async () => {
+    const total = bacSum();
+    if (!total) return;
+    if (!take(total)) return say(bac.msg, "チップが足りません。", "lose");
+    bacBusy = true; bacLast = { ...bacBets };
+    bac.pside.classList.remove("win"); bac.bside.classList.remove("win");
+    if (bacDeck.length < 30) bacDeck = newDeck(8);
+    // 先に結果まで決めてから、1枚ずつ見せる
+    const d = () => bacDeck.pop();
+    const P = [d()], B = [d()];
+    P.push(d()); B.push(d());
+    const natural = bacTotal(P) >= 8 || bacTotal(B) >= 8;
+    let p3 = null, b3 = null;
+    if (!natural) {
+      if (bacTotal(P) <= 5) { p3 = d(); P.push(p3); }
+      if (bankerDraws(bacTotal(B.slice(0, 2)), p3)) { b3 = d(); B.push(b3); }
+    }
+    say(bac.msg, " ");
+    bacRender();
+    const shown = { P: [], B: [] };
+    const show = () => {
+      renderHand(bac.player, shown.P); renderHand(bac.banker, shown.B);
+      bac.pv.textContent = shown.P.length ? bacTotal(shown.P) : "";
+      bac.bv.textContent = shown.B.length ? bacTotal(shown.B) : "";
+    };
+    show();
+    for (const [side, card] of [["P", P[0]], ["B", B[0]], ["P", P[1]], ["B", B[1]]]) {
+      await sleep(330);
+      shown[side].push(card); show();
+    }
+    if (natural) say(bac.msg, "ナチュラル！");
+    if (p3) { await sleep(650); shown.P.push(p3); show(); }
+    if (b3) { await sleep(650); shown.B.push(b3); show(); }
+    await sleep(300);
+    const pt = bacTotal(P), bt = bacTotal(B);
+    const outcome = pt > bt ? "player" : bt > pt ? "banker" : "tie";
+    if (outcome !== "tie") (outcome === "player" ? bac.pside : bac.bside).classList.add("win");
+    let payout = 0;
+    const won = new Set();
+    for (const [k, amt] of Object.entries(bacBets)) {
+      if (k === outcome) { payout += Math.floor(amt * BAC_RET[k]); won.add(k); }
+      else if (outcome === "tie") payout += amt; // タイのときはプレイヤー・バンカーへの賭けは戻る
+    }
+    pay(payout);
+    bacRoad.push(outcome);
+    if (bacRoad.length > 36) bacRoad.shift();
+    const head = outcome === "tie" ? `タイ（${pt} 対 ${bt}）！` : `${BAC_NAMES[outcome]}の勝ち（${pt} 対 ${bt}）。`;
+    const [t, k] = resultText(total, payout, "baccarat");
+    say(bac.msg, `${head} ${t}`, k);
+    bacBusy = false; bacDone = true;
+    bacRender(won);
+  };
+  bacRender();
+
+  /* ---------- keno ---------- */
+  // KENO_PAYS[選んだ個数][当たった個数] = 払い戻し倍率（賭け金込み）。書いていない当たり数は配当なし
+  const KENO_PAYS = {
+    1: { 1: 3.6 },
+    2: { 2: 15 },
+    3: { 2: 2, 3: 45 },
+    4: { 2: 1, 3: 6, 4: 150 },
+    5: { 3: 3, 4: 20, 5: 650 },
+    6: { 3: 2, 4: 6, 5: 90, 6: 1500 },
+    7: { 3: 1, 4: 3, 5: 25, 6: 350, 7: 5000 },
+    8: { 4: 2, 5: 12, 6: 100, 7: 1500, 8: 15000 },
+    9: { 4: 1, 5: 5, 6: 50, 7: 350, 8: 4000, 9: 30000 },
+    10: { 0: 2, 5: 3, 6: 20, 7: 150, 8: 1000, 9: 6000, 10: 100000 },
+  };
+  const KENO_MAX = 10;
+  const comb = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return r; };
+  // 80個から20個引いたとき、選んだ n 個のうち h 個が当たる確率
+  const kenoProb = (n, h) => (comb(n, h) * comb(80 - n, 20 - h)) / comb(80, 20);
+  const pct = p => { const v = p * 100; return `${v >= 10 ? v.toFixed(1) : Number(v.toPrecision(2))}%`; };
+  const kn = { board: $("#keno-board"), status: $("#keno-status"), msg: $("#keno-msg"), draw: $("#keno-draw"), quick: $("#keno-quick"), clear: $("#keno-clear"), pay: $("#keno-pay") };
+  const knBar = makeBetBar($("#keno-bet"));
+  const picks = new Set();
+  let knBusy = false, knDrawn = [];
+  kn.board.innerHTML = Array.from({ length: 80 }, (_, i) => `<button class="kn" data-n="${i + 1}" aria-pressed="false">${i + 1}</button>`).join("");
+  function knClearMarks() {
+    knDrawn = [];
+    kn.board.querySelectorAll(".kn").forEach(b => b.classList.remove("drawn", "hit"));
+  }
+  function knRender() {
+    kn.board.querySelectorAll(".kn").forEach(b => b.setAttribute("aria-pressed", String(picks.has(+b.dataset.n))));
+    const hits = knDrawn.filter(n => picks.has(n)).length;
+    kn.status.textContent = `選んだ数字 ${picks.size} / ${KENO_MAX}` + (knDrawn.length ? ` ・ 抽選 ${knDrawn.length} / 20 ・ 当たり ${hits}` : "");
+    kn.draw.disabled = knBusy || picks.size === 0;
+    kn.quick.disabled = kn.clear.disabled = knBusy;
+    knBar.lock(knBusy);
+    const n = picks.size;
+    if (!n) {
+      kn.pay.innerHTML = `<tbody><tr><td colspan="3">数字を選ぶと、ここに配当表が出ます。</td></tr></tbody>`;
+      return;
+    }
+    const table = KENO_PAYS[n];
+    const rows = Object.keys(table).map(Number).sort((a, b) => b - a);
+    const rtp = rows.reduce((a, h) => a + kenoProb(n, h) * table[h], 0);
+    kn.pay.innerHTML = `<thead><tr><th>${n}個選んで</th><th>確率</th><th>配当</th></tr></thead><tbody>`
+      + rows.map(h => `<tr data-h="${h}"><td>${h}個当たり</td><td class="prob">${pct(kenoProb(n, h))}</td><td>×${table[h].toLocaleString("ja-JP")}</td></tr>`).join("")
+      + `</tbody><tfoot><tr><td colspan="3">払い戻し率 約${Math.round(rtp * 100)}%</td></tr></tfoot>`;
+  }
+  kn.board.onclick = e => {
+    const b = e.target.closest(".kn");
+    if (!b || knBusy) return;
+    if (knDrawn.length) { knClearMarks(); say(kn.msg, " "); }
+    const n = +b.dataset.n;
+    if (picks.has(n)) picks.delete(n);
+    else if (picks.size >= KENO_MAX) return say(kn.msg, `選べるのは${KENO_MAX}個までです。`, "lose");
+    else picks.add(n);
+    knRender();
+  };
+  kn.quick.onclick = () => {
+    const count = picks.size || 5;
+    picks.clear(); knClearMarks();
+    const all = Array.from({ length: 80 }, (_, i) => i + 1);
+    for (let i = 0; i < count; i++) { const j = i + Math.floor(Math.random() * (80 - i)); [all[i], all[j]] = [all[j], all[i]]; picks.add(all[i]); }
+    say(kn.msg, `${count}個をおまかせで選びました。`);
+    knRender();
+  };
+  kn.clear.onclick = () => { picks.clear(); knClearMarks(); say(kn.msg, "1〜80から、好きな数字を1〜10個選んでください。"); knRender(); };
+  kn.draw.onclick = async () => {
+    const bet = knBar.bet, n = picks.size;
+    if (!n || !checkBet(bet, kn.msg)) return;
+    knBusy = true; knClearMarks();
+    kn.pay.querySelectorAll("tr").forEach(tr => tr.classList.remove("hit"));
+    say(kn.msg, "抽選中…");
+    knRender();
+    const all = Array.from({ length: 80 }, (_, i) => i + 1);
+    for (let i = 0; i < 20; i++) { const j = i + Math.floor(Math.random() * (80 - i)); [all[i], all[j]] = [all[j], all[i]]; }
+    for (const num of all.slice(0, 20)) {
+      await sleep(110);
+      knDrawn.push(num);
+      const b = kn.board.querySelector(`[data-n="${num}"]`);
+      b.classList.add("drawn");
+      if (picks.has(num)) b.classList.add("hit");
+      knRender();
+    }
+    const hits = knDrawn.filter(x => picks.has(x)).length;
+    const mult = KENO_PAYS[n][hits] || 0;
+    const payout = Math.floor(bet * mult);
+    pay(payout);
+    const row = kn.pay.querySelector(`tr[data-h="${hits}"]`);
+    if (row) row.classList.add("hit");
+    const [t, k] = resultText(bet, payout, "keno");
+    say(kn.msg, `${n}個中 ${hits}個当たり${mult ? `（×${mult}）！` : "。"} ${t}`, k);
+    knBusy = false;
+    knRender();
+  };
+  knRender();
 };
