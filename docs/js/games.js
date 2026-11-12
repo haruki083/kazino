@@ -222,15 +222,15 @@ window.KazinoGames.start = () => {
   // 先に当たりの種類をこの確率で決めて、それに合う絵柄をリールに表示する。
   // どれにも当たらなかった残りの確率がハズレ。
   const SLOT_PAYS = [
-    { s: "👑", count: 3, chance: 0.006, mult: 10000 },
-    { s: "💎", count: 3, chance: 0.05, mult: 1500 },
-    { s: "⭐", count: 3, chance: 0.2, mult: 600 },
-    { s: "👑", count: 2, chance: 0.4, mult: 400 },
-    { s: "🔔", count: 3, chance: 0.5, mult: 250 },
-    { s: "🔔", count: 2, chance: 10, mult: 25 },
-    { s: "🍋", count: 3, chance: 1.8, mult: 100 },
-    { s: "🍒", count: 3, chance: 15, mult: 50 },
-    { s: "🍒", count: 2, chance: 25, mult: 10 },
+    { s: "👑", count: 3, chance: 0.006, mult: 1000 },
+    { s: "💎", count: 3, chance: 0.05, mult: 150 },
+    { s: "⭐", count: 3, chance: 0.2, mult: 60 },
+    { s: "👑", count: 2, chance: 0.4, mult: 40 },
+    { s: "🔔", count: 3, chance: 3, mult: 25 },
+    { s: "🍋", count: 3, chance: 5, mult: 10 },
+    { s: "🍒", count: 3, chance: 10, mult: 5 },
+    { s: "🔔", count: 2, chance: 15, mult: 2.5 },
+    { s: "🍒", count: 2, chance: 20, mult: 1.5 },
   ];
   const SYM = SLOT_SYMBOLS.map(x => [x.s]);
   const bySymbol = Object.fromEntries(SLOT_SYMBOLS.map(x => [x.s, x]));
@@ -293,7 +293,7 @@ window.KazinoGames.start = () => {
       reels[i].firstElementChild.textContent = res[i];
     }
     const [mult, key, sym] = slotMult(res);
-    const payout = bet * mult;
+    const payout = Math.floor(bet * mult); // ×2.5 などで端数が出たら切り捨て
     pay(payout);
     if (mult) {
       reels.forEach((r, i) => { if (res[i] === sym) r.classList.add("win"); });

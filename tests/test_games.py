@@ -67,13 +67,12 @@ class BlackjackTest(unittest.TestCase):
 
 class SlotsTest(unittest.TestCase):
     def test_payouts(self):
-        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 10000)
-        self.assertEqual(slots.payout_multiplier(["👑", "🍋", "👑"]), 400)
-        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 10)
-        self.assertEqual(slots.payout_multiplier(["🍒", "🍒", "🍒"]), 50)
-        self.assertEqual(slots.payout_multiplier(["🔔", "🔔", "🍋"]), 25)
+        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 1000)
+        self.assertEqual(slots.payout_multiplier(["👑", "🍋", "👑"]), 40)
+        self.assertEqual(slots.payout_multiplier(["🔔", "🔔", "🍋"]), 2.5)
+        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 1.5)
+        self.assertEqual(slots.payout_multiplier(["🍒", "🍒", "🍒"]), 5)
         self.assertEqual(slots.payout_multiplier(["🔔", "🍋", "⭐"]), 0)
-        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍋"]), 0)
 
     def test_spins_follow_the_table(self):
         rng = random.Random(7)
@@ -89,7 +88,7 @@ class SlotsTest(unittest.TestCase):
         self.assertAlmostEqual(seen[0] / n * 100, lose, delta=1)
 
     def test_return_rate(self):
-        self.assertAlmostEqual(slots.return_rate(), 19.7, places=6)
+        self.assertAlmostEqual(slots.return_rate(), 2.84, places=6)
 
     def test_percent(self):
         self.assertEqual(slots.percent(0.00006), "0.006%")

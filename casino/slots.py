@@ -15,19 +15,19 @@ NAMES = {"🍒": "チェリー", "🍋": "レモン", "🔔": "ベル", "⭐": "
 # 先に当たりの種類をこの確率で決めて、それに合う絵柄をリールに表示する。
 # どれにも当たらなかった残りの確率がハズレ。
 PAYS = [
-    ("👑", 3, 0.006, 10000),
-    ("💎", 3, 0.05, 1500),
-    ("⭐", 3, 0.2, 600),
-    ("👑", 2, 0.4, 400),
-    ("🔔", 3, 0.5, 250),
-    ("🔔", 2, 10, 25),
-    ("🍋", 3, 1.8, 100),
-    ("🍒", 3, 15, 50),
-    ("🍒", 2, 25, 10),
+    ("👑", 3, 0.006, 1000),
+    ("💎", 3, 0.05, 150),
+    ("⭐", 3, 0.2, 60),
+    ("👑", 2, 0.4, 40),
+    ("🔔", 3, 3, 25),
+    ("🍋", 3, 5, 10),
+    ("🍒", 3, 10, 5),
+    ("🔔", 2, 15, 2.5),
+    ("🍒", 2, 20, 1.5),
 ]
 
 
-def payout_multiplier(reels: list[str]) -> int:
+def payout_multiplier(reels: list[str]) -> float:
     for symbol, count, _, mult in PAYS:
         if reels.count(symbol) == count:
             return mult
@@ -50,7 +50,7 @@ def spin(rng: random.Random) -> list[str]:
             return reels
 
 
-def paytable() -> list[tuple[str, float, int]]:
+def paytable() -> list[tuple[str, float, float]]:
     """(そろい方, 確率, 倍率) の一覧を倍率の高い順に返す。確率は 0〜1。"""
     rows = [(symbol * 3 if count == 3 else f"{symbol * 2} が2つ", chance / 100, mult)
             for symbol, count, chance, mult in PAYS]
@@ -93,7 +93,7 @@ def play(wallet: Wallet, rng: random.Random | None = None, animate: bool = True)
         wallet.withdraw(bet)
         reels = spin(rng)
         _animate(rng, reels, animate)
-        payout = bet * payout_multiplier(reels)
+        payout = int(bet * payout_multiplier(reels))  # ×2.5 などで端数が出たら切り捨て
         wallet.deposit(payout)
         ui.show_result(bet, payout)
         wallet.save()
