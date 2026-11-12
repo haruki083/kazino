@@ -191,7 +191,7 @@ window.KazinoGames.start = () => {
   function bjFinish() {
     BJ.phase = "done";
     const o = settle(BJ.player, BJ.dealer);
-    const payout = Math.floor(BJ.bet * { blackjack: 2.5, win: 2, push: 1, lose: 0 }[o]);
+    const payout = Math.floor(BJ.bet * { blackjack: 3, win: 2, push: 1, lose: 0 }[o]);
     pay(payout);
     bjRender();
     const head = {
@@ -522,7 +522,7 @@ window.KazinoGames.start = () => {
   pkRender();
 
   /* ---------- baccarat ---------- */
-  const BAC_RET = { player: 2, banker: 1.95, tie: 9 }; // 払い戻し倍率（賭け金込み）
+  const BAC_RET = { player: 2.1, banker: 2, tie: 10.6 }; // 払い戻し倍率（賭け金込み）。払い戻し率はどれも100%を少し超える
   const BAC_NAMES = { player: "プレイヤー", banker: "バンカー", tie: "タイ" };
   const bacVal = c => (c.r === 14 ? 1 : c.r >= 10 ? 0 : c.r);
   const bacTotal = cs => cs.reduce((a, c) => a + bacVal(c), 0) % 10;

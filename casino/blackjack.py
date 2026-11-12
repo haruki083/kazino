@@ -9,9 +9,9 @@ from casino.cards import Card, Deck, format_hand
 from casino.wallet import Wallet
 
 # 賭け金に対する払い戻し倍率（賭け金込み）
-PAYOUT = {"blackjack": 2.5, "win": 2.0, "push": 1.0, "lose": 0.0}
+PAYOUT = {"blackjack": 3.0, "win": 2.0, "push": 1.0, "lose": 0.0}
 MESSAGES = {
-    "blackjack": "ブラックジャック！ 1.5倍の配当です。",
+    "blackjack": "ブラックジャック！ 2倍の配当です。",
     "win": "あなたの勝ち！",
     "push": "引き分け（プッシュ）。",
     "lose": "ディーラーの勝ち。",
@@ -112,7 +112,7 @@ def play_round(wallet: Wallet, deck: Deck, bet: int) -> str:
 def play(wallet: Wallet, rng: random.Random | None = None) -> None:
     ui.title("♠ ブラックジャック ♥")
     print("  21 に近い方が勝ち。21 を超えたら負け。")
-    print("  ディーラーは 17 以上で止まります。ブラックジャックは 1.5 倍の配当。")
+    print("  ディーラーは 17 以上で止まります。ブラックジャックは 2 倍の配当。")
     deck = Deck(rng, decks=4)
     while True:
         print()
