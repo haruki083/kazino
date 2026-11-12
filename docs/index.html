@@ -52,7 +52,8 @@
       </form>
       <form id="f-register" class="form" novalidate hidden>
         <label for="reg-name">ニックネーム（ランキングに表示されます）</label>
-        <input id="reg-name" type="text" maxlength="12" autocomplete="nickname" required>
+        <input id="reg-name" type="text" maxlength="12" autocomplete="nickname" aria-describedby="reg-name-hint" required>
+        <p class="field-hint" id="reg-name-hint" aria-live="polite">ほかの人と同じ名前は使えません。</p>
         <label for="reg-email">メールアドレス</label>
         <input id="reg-email" type="email" autocomplete="email" required>
         <label for="reg-pass">パスワード（6文字以上）</label>

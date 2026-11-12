@@ -173,15 +173,42 @@
       walkIn();
     });
   });
+  /* ニックネームが使えるか、入力しながら確かめる */
+  const nameHint = $("#reg-name-hint");
+  const HINT_DEFAULT = "ほかの人と同じ名前は使えません。";
+  let nameTimer = null, nameSeq = 0;
+  function setHint(text, kind = "") { nameHint.textContent = text; nameHint.className = "field-hint" + (kind ? " " + kind : ""); }
+  $("#reg-name").addEventListener("input", () => {
+    clearTimeout(nameTimer);
+    const name = $("#reg-name").value.trim();
+    const seq = ++nameSeq;
+    if (!name) return setHint(HINT_DEFAULT);
+    const err = window.kazinoNameError(name);
+    if (err) return setHint(err, "ng");
+    setHint("確認中…");
+    nameTimer = setTimeout(async () => {
+      try {
+        const ok = await backend.isNameAvailable(name);
+        if (seq !== nameSeq) return; // 入力が変わっていたら古い結果は捨てる
+        setHint(ok ? `「${name}」は使えます` : "この名前はすでに使われています", ok ? "ok" : "ng");
+      } catch (e) {
+        if (seq === nameSeq) setHint(HINT_DEFAULT);
+      }
+    }, 400);
+  });
+
   $("#f-register").addEventListener("submit", e => {
     e.preventDefault();
     const name = $("#reg-name").value.trim();
     const pass = $("#reg-pass").value;
-    if (!name) { deskMsg.textContent = "ニックネームを入力してください。"; return; }
+    const nameErr = window.kazinoNameError(name);
+    if (nameErr) { deskMsg.textContent = nameErr; return; }
     if (pass.length < 6) { deskMsg.textContent = "パスワードは6文字以上にしてください。"; return; }
     submitting(e.target, async () => {
       const p = await backend.register(name, $("#reg-email").value, pass);
       $("#reg-pass").value = "";
+      $("#reg-name").value = "";
+      setHint(HINT_DEFAULT);
       $("#desk-forms").hidden = true;
       $("#new-card").hidden = false;
       $("#new-card-slot").innerHTML = memberCardHTML(p);

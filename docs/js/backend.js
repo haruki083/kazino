@@ -5,7 +5,7 @@
 
 (() => {
   const START = 1000;
-  const FIELDS = ["name", "balance", "memberNo", "played", "wins", "biggestWin", "lastBonus"];
+  const FIELDS = ["name", "nameKey", "balance", "memberNo", "played", "wins", "biggestWin", "lastBonus"];
   const pick = p => Object.fromEntries(FIELDS.map(k => [k, p[k]]));
 
   function today() {
@@ -19,8 +19,23 @@
     return String(h % 100000000).padStart(8, "0");
   }
   function newProfile(name, memberNo) {
-    return { name, balance: START, memberNo, played: 0, wins: 0, biggestWin: 0, lastBonus: "" };
+    return { name, nameKey: nameKey(name), balance: START, memberNo, played: 0, wins: 0, biggestWin: 0, lastBonus: "" };
   }
+  // 名前の重複チェック用キー。全角/半角・大文字/小文字・空白の違いは同じ名前として扱う
+  function nameKey(name) {
+    return encodeURIComponent(String(name).normalize("NFKC").toLowerCase().replace(/\s+/g, ""));
+  }
+  // 名前として使えない場合は理由を返す（使えるなら空文字）
+  function nameError(name) {
+    const n = String(name).trim();
+    if (!n) return "ニックネームを入力してください。";
+    if ([...n].length > 12) return "ニックネームは12文字以内にしてください。";
+    if (/[\/\\]/.test(n)) return "ニックネームに / や \\ は使えません。";
+    const plain = n.normalize("NFKC").replace(/\s+/g, "");
+    if (!plain || /^\.+$/.test(plain) || /^__.*__$/.test(plain)) return "このニックネームは使えません。";
+    return "";
+  }
+  const TAKEN = "このニックネームはすでに使われています。別の名前にしてください。";
 
   /* ---------- オフラインモード（ブラウザ内保存） ---------- */
   function LocalBackend() {
@@ -47,6 +62,7 @@
         email = email.trim().toLowerCase();
         const acc = read(ACC, {});
         if (acc[email]) throw new Error("このメールアドレスはもう登録されています。");
+        if (!(await this.isNameAvailable(name))) throw new Error(TAKEN);
         const p = newProfile(name, memberNoFrom(email + Date.now()));
         acc[email] = { pass: await hash(pass), profile: p };
         write(ACC, acc);
@@ -70,6 +86,10 @@
       save(p) {
         const email = read(SES, null), acc = read(ACC, {});
         if (email && acc[email]) { acc[email].profile = pick(p); write(ACC, acc); }
+      },
+      async isNameAvailable(name) {
+        const key = nameKey(name);
+        return !Object.values(read(ACC, {})).some(a => (a.profile.nameKey || nameKey(a.profile.name)) === key);
       },
       async leaderboard() {
         return Object.values(read(ACC, {})).map(a => a.profile).sort((a, b) => b.balance - a.balance).slice(0, 10);
@@ -100,12 +120,15 @@
     const stamp = () => firebase.firestore.FieldValue.serverTimestamp();
     let listener = null, busy = false, uid = null, pending = null, timer = null;
 
+    const nameRef = key => db.collection("usernames").doc(key);
     async function loadProfile(user) {
       const snap = await ref(user.uid).get();
       if (snap.exists) return snap.data();
-      const p = newProfile(user.displayName || "ゲスト", memberNoFrom(user.uid));
-      await ref(user.uid).set({ ...p, createdAt: stamp() });
-      return p;
+      // 登録の途中で失敗して会員データがないアカウントは消して、登録し直せるようにする
+      await user.delete().catch(() => auth.signOut());
+      const e = new Error("会員情報が見つかりませんでした。お手数ですが、もう一度会員登録してください。");
+      e.code = "kazino/no-profile";
+      throw e;
     }
     function flush() {
       if (!pending || !uid) return;
@@ -125,21 +148,32 @@
           if (busy) return; // 登録・ログイン中は、その処理側で通知する
           if (!user) { uid = null; cb(null); return; }
           uid = user.uid;
-          try { cb(await loadProfile(user)); } catch (e) { console.error(message(e)); cb(null); }
+          try { cb(await loadProfile(user)); } catch (e) { console.error(e.message); cb(null); }
         });
       },
       async register(name, email, pass) {
         busy = true;
+        let user = null;
         try {
-          const { user } = await auth.createUserWithEmailAndPassword(email.trim(), pass);
-          await user.updateProfile({ displayName: name });
+          if (!(await this.isNameAvailable(name))) throw Object.assign(new Error(TAKEN), { code: "kazino/name-taken" });
+          ({ user } = await auth.createUserWithEmailAndPassword(email.trim(), pass));
           const p = newProfile(name, memberNoFrom(user.uid));
-          await ref(user.uid).set({ ...p, createdAt: stamp() });
+          // 会員データと「使われた名前」を同時に書く。名前が先に取られていたらルールで両方失敗する
+          const batch = db.batch();
+          batch.set(ref(user.uid), { ...p, createdAt: stamp() });
+          batch.set(nameRef(p.nameKey), { uid: user.uid, name: p.name, createdAt: stamp() });
+          await batch.commit();
+          await user.updateProfile({ displayName: name }).catch(() => {});
           uid = user.uid;
           if (listener) listener(p);
           return p;
         } catch (e) {
-          throw new Error(message(e));
+          // 名前の登録に失敗したら、作りかけのログイン情報を消してメールアドレスを使えるようにする
+          if (user) {
+            await user.delete().catch(() => auth.signOut());
+            if (e.code === "permission-denied") throw new Error(TAKEN);
+          }
+          throw new Error(e.code && e.code.startsWith("kazino/") ? e.message : message(e));
         } finally {
           busy = false;
         }
@@ -153,10 +187,14 @@
           if (listener) listener(p);
           return p;
         } catch (e) {
-          throw new Error(message(e));
+          throw new Error(e.code && e.code.startsWith("kazino/") ? e.message : message(e));
         } finally {
           busy = false;
         }
+      },
+      async isNameAvailable(name) {
+        const snap = await nameRef(nameKey(name)).get();
+        return !snap.exists;
       },
       async logout() { flush(); await auth.signOut(); },
       save(p) { pending = pick(p); clearTimeout(timer); timer = setTimeout(flush, 800); },
@@ -168,6 +206,7 @@
   }
 
   window.kazinoToday = today;
+  window.kazinoNameError = nameError;
   window.createKazinoBackend = () => {
     const cfg = window.KAZINO_FIREBASE_CONFIG;
     if (cfg && cfg.apiKey && window.firebase) {

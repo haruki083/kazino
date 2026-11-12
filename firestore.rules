@@ -4,22 +4,48 @@ rules_version = '2';
 // Firebase コンソール → Firestore Database → ルール に貼り付けて「公開」してください。
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 会員データ（ドキュメントID = ログインした人の uid）
     match /users/{uid} {
       // ランキング表示のため、ログインしている人は全員の名前とチップ数を読める
       allow read: if request.auth != null;
-      // 自分のデータだけ作れる。最初のチップは 1000 枚
+
+      // 自分のデータだけ作れる。最初のチップは 1000 枚。
+      // ニックネームは usernames に同時に登録されていて、それが自分のものであること
       allow create: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.balance == 1000
         && request.resource.data.name is string
-        && request.resource.data.name.size() <= 12;
-      // 自分のデータだけ更新できる。名前は変えられない
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 12
+        && request.resource.data.nameKey is string
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.nameKey)).data.uid == request.auth.uid;
+
+      // 自分のデータだけ更新できる。ニックネームは変えられない
       allow update: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.balance is int
         && request.resource.data.balance >= 0
-        && request.resource.data.name == resource.data.name;
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.nameKey == resource.data.nameKey;
+
       allow delete: if false;
+    }
+
+    // 使われたニックネームの一覧（ドキュメントID = 名前を正規化したキー）
+    // 一度使われた名前は消せないので、二度と使えない
+    match /usernames/{key} {
+      // 会員登録の前に「この名前は使えるか」を確かめられるよう、1件ずつなら誰でも読める
+      allow get: if true;
+      allow list: if false;
+
+      // まだ誰も使っていない名前だけ、自分の会員データと同時に登録できる
+      // （すでにあるドキュメントへの書き込みは create ではなく update になるので拒否される）
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.nameKey == key;
+
+      allow update, delete: if false;
     }
   }
 }
