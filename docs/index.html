@@ -98,6 +98,7 @@
           <p class="eyebrow">CASINO FLOOR</p>
           <h2 id="lobby-hi">ようこそ</h2>
           <dl class="stats" id="stats"></dl>
+          <ul class="game-stats" id="game-stats" aria-label="ゲームごとの収支"></ul>
           <div class="perks">
             <button class="btn" id="bonus">本日のボーナスを受け取る</button>
             <button class="btn ghost" id="rescue" hidden>チップを1000枚に戻す</button>
@@ -125,16 +126,24 @@
         </a>
         <a class="tile tile-rank" href="#ranking">
           <div class="art art-rk" aria-hidden="true">TOP 10</div>
-          <strong>ハイローラーズ</strong><span>チップ持ちランキング</span><em>VIP</em>
+          <strong>ハイローラーズ</strong><span>総チップ・ゲーム別ランキング</span><em>VIP</em>
         </a>
       </div>
     </section>
 
     <section id="v-ranking" class="ranking" hidden>
       <p class="printed big">High rollers</p>
+      <div class="rank-tabs" role="tablist" aria-label="ランキングの種類">
+        <button type="button" role="tab" data-kind="total" aria-selected="true">総チップ</button>
+        <button type="button" role="tab" data-kind="blackjack" aria-selected="false">ブラックジャック</button>
+        <button type="button" role="tab" data-kind="slots" aria-selected="false">スロット</button>
+        <button type="button" role="tab" data-kind="roulette" aria-selected="false">ルーレット</button>
+        <button type="button" role="tab" data-kind="poker" aria-selected="false">ポーカー</button>
+      </div>
+      <p class="rank-caption" id="rank-caption"></p>
       <div class="rank-scroll">
         <table class="rank">
-          <thead><tr><th>#</th><th>名前</th><th>ランク</th><th class="num">チップ</th></tr></thead>
+          <thead id="rank-head"></thead>
           <tbody id="rank-body"></tbody>
         </table>
       </div>

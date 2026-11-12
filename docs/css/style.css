@@ -272,6 +272,16 @@ body {
 .rank-no { font-family: var(--mono); color: var(--bulb); width: 2.5em; }
 .rank tr.me td { background: rgba(226, 182, 92, .16); }
 .rank-note { text-align: center; color: var(--mist); }
+.rank-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.rank-tabs button { font: inherit; font-size: 13px; font-weight: 700; color: var(--mist); background: rgba(0, 0, 0, .3); border: 1px solid var(--felt-line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+.rank-tabs button[aria-selected="true"] { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+.rank-caption { margin: 0; font-size: 13px; color: var(--mist); }
+.rank .plus, .game-stats .plus { color: var(--win); }
+.rank .minus, .game-stats .minus { color: var(--lose); }
+.game-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 18px; font-size: 13px; }
+.game-stats li { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dashed rgba(240, 214, 150, .18); padding: 2px 0; }
+.game-stats span { color: var(--mist); }
+.game-stats b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .rank-foot { margin: 0; font-size: 12px; color: var(--mist); }
 
 @media (prefers-reduced-motion: reduce) {

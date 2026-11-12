@@ -77,6 +77,11 @@
       <div><dt>プレイ回数</dt><dd>${profile.played}</dd></div>
       <div><dt>勝率</dt><dd>${rate}%</dd></div>
       <div><dt>最大勝ち</dt><dd>${profile.biggestWin.toLocaleString("ja-JP")}</dd></div>`;
+    $("#game-stats").innerHTML = Object.entries(GAME_NAMES).map(([id, label]) => {
+      const g = profile.games[id];
+      const cls = g.net > 0 ? "plus" : g.net < 0 ? "minus" : "";
+      return `<li><span>${label}</span><b class="${cls}">${g.played ? signed(g.net) : "—"}</b></li>`;
+    }).join("");
     renderMember();
   }
 
@@ -87,12 +92,18 @@
     backend.save(profile);
     renderMember();
   };
-  W.onRound = (bet, payout) => {
+  W.onRound = (bet, payout, game) => {
     if (!profile) return;
     profile.played += 1;
     if (payout > bet) {
       profile.wins += 1;
       profile.biggestWin = Math.max(profile.biggestWin, payout - bet);
+    }
+    const g = profile.games && profile.games[game];
+    if (g) {
+      g.played += 1;
+      g.net += payout - bet;
+      if (payout > bet) g.wins += 1;
     }
     backend.save(profile);
   };
@@ -108,16 +119,41 @@
   };
 
   /* ---------- ランキング ---------- */
+  const GAME_NAMES = { blackjack: "ブラックジャック", slots: "スロット", roulette: "ルーレット", poker: "ビデオポーカー" };
+  const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n).toLocaleString("ja-JP");
+  let rankKind = "total";
+  document.querySelectorAll(".rank-tabs button").forEach(b => {
+    b.onclick = () => { rankKind = b.dataset.kind; loadRanking(); };
+  });
   async function loadRanking() {
+    document.querySelectorAll(".rank-tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.kind === rankKind)));
+    const total = rankKind === "total";
+    $("#rank-head").innerHTML = total
+      ? `<tr><th>#</th><th>名前</th><th>ランク</th><th class="num">チップ</th></tr>`
+      : `<tr><th>#</th><th>名前</th><th class="num">プレイ</th><th class="num">収支</th></tr>`;
+    $("#rank-caption").textContent = total
+      ? "いま持っているチップが多い順"
+      : `${GAME_NAMES[rankKind]}で勝った枚数（収支 = 払い戻し − 賭け金）が多い順。遊んだ人だけ表示します`;
     const body = $("#rank-body");
     body.innerHTML = `<tr><td colspan="4" class="rank-note">読み込み中…</td></tr>`;
+    const kind = rankKind;
     try {
-      const rows = await backend.leaderboard();
-      if (!rows.length) { body.innerHTML = `<tr><td colspan="4" class="rank-note">まだ誰もいません。</td></tr>`; return; }
+      const rows = await backend.leaderboard(kind);
+      if (kind !== rankKind) return; // 読み込み中に別のタブが押された
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="4" class="rank-note">${total ? "まだ誰もいません。" : "まだ誰も遊んでいません。"}</td></tr>`;
+        return;
+      }
       body.innerHTML = rows.map((r, i) => {
-        const [, label, cls] = tierOf(r.balance);
         const me = profile && r.memberNo === profile.memberNo;
-        return `<tr class="${me ? "me" : ""}"><td class="rank-no">${i + 1}</td><td>${esc(r.name)}${me ? "（あなた）" : ""}</td><td><span class="tier-badge t-${cls}">${label}</span></td><td class="num">${Number(r.balance).toLocaleString("ja-JP")}</td></tr>`;
+        const name = `<td>${esc(r.name)}${me ? "（あなた）" : ""}</td>`;
+        if (total) {
+          const [, label, cls] = tierOf(r.balance);
+          return `<tr class="${me ? "me" : ""}"><td class="rank-no">${i + 1}</td>${name}<td><span class="tier-badge t-${cls}">${label}</span></td><td class="num">${Number(r.balance).toLocaleString("ja-JP")}</td></tr>`;
+        }
+        const g = r.games[kind];
+        const cls = g.net > 0 ? "plus" : g.net < 0 ? "minus" : "";
+        return `<tr class="${me ? "me" : ""}"><td class="rank-no">${i + 1}</td>${name}<td class="num">${g.played.toLocaleString("ja-JP")}回</td><td class="num ${cls}">${signed(g.net)}</td></tr>`;
       }).join("");
     } catch (e) {
       body.innerHTML = `<tr><td colspan="4" class="rank-note">ランキングを読み込めませんでした。</td></tr>`;

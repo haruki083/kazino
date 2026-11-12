@@ -38,8 +38,9 @@ window.KazinoGames.start = () => {
   const MIN_BET = 10;
 
   function say(el, text, kind = "") { el.textContent = text; el.className = "msg" + (kind ? " " + kind : ""); }
-  function resultText(bet, payout) {
-    if (W.onRound) W.onRound(bet, payout);
+  // game: どのゲームの結果か（ランキングのゲーム別収支に使う）
+  function resultText(bet, payout, game) {
+    if (W.onRound) W.onRound(bet, payout, game);
     const d = payout - bet;
     if (d > 0) return [`+${d}枚の勝ち！`, "win"];
     if (d === 0) return ["賭け金が戻りました。", "push"];
@@ -199,7 +200,7 @@ window.KazinoGames.start = () => {
       push: "引き分け。",
       lose: hv(BJ.player) > 21 ? "バースト…" : isBJ(BJ.dealer) ? "ディーラーのブラックジャック。" : "ディーラーの勝ち。",
     }[o];
-    const [t, k] = resultText(BJ.bet, payout);
+    const [t, k] = resultText(BJ.bet, payout, "blackjack");
     say(bj.msg, `${head} ${t}`, k);
   }
   bj.deal.onclick = bjDeal;
@@ -281,7 +282,7 @@ window.KazinoGames.start = () => {
       reels.forEach((r, i) => { if (res[i] === sym) r.classList.add("win"); });
       $(`#sl-pay tr[data-k="${key}"]`).classList.add("hit");
     }
-    const [t, k] = resultText(bet, payout);
+    const [t, k] = resultText(bet, payout, "slots");
     const head = !mult ? "" : sym === "👑" && mult >= 1000 ? "ジャックポット！！ " : `${bySymbol[sym].name} ×${mult}！ `;
     say(slMsg, head + t, k);
     slBtn.disabled = false; slBar.lock(false);
@@ -424,7 +425,7 @@ window.KazinoGames.start = () => {
     rl.hist.innerHTML = rlHistory.map(x => `<span class="${colorOf(x)}">${x}</span>`).join("");
     board.querySelector(`[data-k="n:${n}"]`).classList.add("landed");
     const name = { z: "緑", r: "赤", b: "黒" }[colorOf(n)];
-    const [t, k] = resultText(total, payout);
+    const [t, k] = resultText(total, payout, "roulette");
     say(rl.msg, `${n}（${name}）！ ${t}`, k);
     rlBusy = false;
     rlRender(won);
@@ -495,7 +496,7 @@ window.KazinoGames.start = () => {
       markPay(i);
       const payout = i >= 0 ? PK.bet * PT[i][1] : 0;
       pay(payout);
-      const [t, k] = resultText(PK.bet, payout);
+      const [t, k] = resultText(PK.bet, payout, "poker");
       say(pk.msg, `${i >= 0 ? PT[i][0] : "役なし"}。 ${t}`, k);
     }
   };

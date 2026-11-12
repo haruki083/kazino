@@ -5,7 +5,23 @@
 
 (() => {
   const START = 1000;
-  const FIELDS = ["name", "nameKey", "balance", "memberNo", "played", "wins", "biggestWin", "lastBonus"];
+  const FIELDS = ["name", "nameKey", "balance", "memberNo", "played", "wins", "biggestWin", "lastBonus", "games"];
+  const GAME_IDS = ["blackjack", "slots", "roulette", "poker"];
+  // ゲームごとの記録: net = 収支（払い戻し − 賭け金の合計）、played = プレイ回数、wins = 勝った回数
+  const emptyGames = () => Object.fromEntries(GAME_IDS.map(g => [g, { net: 0, played: 0, wins: 0 }]));
+  // 古いデータに games がなくても動くようにそろえる
+  function withGames(p) {
+    if (!p) return p;
+    const games = emptyGames();
+    for (const g of GAME_IDS) Object.assign(games[g], (p.games || {})[g] || {});
+    return { ...p, games };
+  }
+  // ランキング: kind が "total" なら所持チップ順、ゲーム名ならそのゲームの収支順（遊んだ人だけ）
+  function rank(list, kind) {
+    const rows = list.map(withGames);
+    if (kind === "total") return rows.sort((a, b) => b.balance - a.balance).slice(0, 10);
+    return rows.filter(p => p.games[kind].played > 0).sort((a, b) => b.games[kind].net - a.games[kind].net).slice(0, 10);
+  }
   const pick = p => Object.fromEntries(FIELDS.map(k => [k, p[k]]));
 
   function today() {
@@ -19,7 +35,7 @@
     return String(h % 100000000).padStart(8, "0");
   }
   function newProfile(name, memberNo) {
-    return { name, nameKey: nameKey(name), balance: START, memberNo, played: 0, wins: 0, biggestWin: 0, lastBonus: "" };
+    return { name, nameKey: nameKey(name), balance: START, memberNo, played: 0, wins: 0, biggestWin: 0, lastBonus: "", games: emptyGames() };
   }
   // 名前の重複チェック用キー。全角/半角・大文字/小文字・空白の違いは同じ名前として扱う
   function nameKey(name) {
@@ -53,7 +69,7 @@
     let listener = null;
     const current = () => {
       const email = read(SES, null), acc = read(ACC, {});
-      return email && acc[email] ? { ...acc[email].profile } : null;
+      return email && acc[email] ? withGames(acc[email].profile) : null;
     };
     return {
       mode: "local",
@@ -75,7 +91,7 @@
         const acc = read(ACC, {});
         if (!acc[email] || acc[email].pass !== (await hash(pass))) throw new Error("メールアドレスかパスワードが違います。");
         write(SES, email);
-        const p = { ...acc[email].profile };
+        const p = withGames(acc[email].profile);
         if (listener) listener(p);
         return p;
       },
@@ -91,8 +107,8 @@
         const key = nameKey(name);
         return !Object.values(read(ACC, {})).some(a => (a.profile.nameKey || nameKey(a.profile.name)) === key);
       },
-      async leaderboard() {
-        return Object.values(read(ACC, {})).map(a => a.profile).sort((a, b) => b.balance - a.balance).slice(0, 10);
+      async leaderboard(kind = "total") {
+        return rank(Object.values(read(ACC, {})).map(a => a.profile), kind);
       },
     };
   }
@@ -123,7 +139,7 @@
     const nameRef = key => db.collection("usernames").doc(key);
     async function loadProfile(user) {
       const snap = await ref(user.uid).get();
-      if (snap.exists) return snap.data();
+      if (snap.exists) return withGames(snap.data());
       // 登録の途中で失敗して会員データがないアカウントは消して、登録し直せるようにする
       await user.delete().catch(() => auth.signOut());
       const e = new Error("会員情報が見つかりませんでした。お手数ですが、もう一度会員登録してください。");
@@ -198,9 +214,11 @@
       },
       async logout() { flush(); await auth.signOut(); },
       save(p) { pending = pick(p); clearTimeout(timer); timer = setTimeout(flush, 800); },
-      async leaderboard() {
-        const qs = await db.collection("users").orderBy("balance", "desc").limit(10).get();
-        return qs.docs.map(d => d.data());
+      async leaderboard(kind = "total") {
+        const field = kind === "total" ? "balance" : `games.${kind}.net`;
+        // ゲーム別は遊んでいない人（0回）を除くので、多めに取ってから10人にしぼる
+        const qs = await db.collection("users").orderBy(field, "desc").limit(kind === "total" ? 10 : 30).get();
+        return rank(qs.docs.map(d => d.data()), kind);
       },
     };
   }
