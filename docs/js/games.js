@@ -75,6 +75,7 @@ window.KazinoGames.start = () => {
     return bar;
   }
   function checkBet(bet, msgEl) {
+    if (W.balance < MIN_BET) { say(msgEl, "チップがなくなりました。「フロアに戻る」から1000枚に戻せます。", "lose"); return false; }
     if (bet < MIN_BET) { say(msgEl, `最低${MIN_BET}枚から賭けられます。チップを押して賭け金を決めてください。`, "lose"); return false; }
     if (!take(bet)) { say(msgEl, "チップが足りません。", "lose"); return false; }
     return true;
@@ -207,21 +208,54 @@ window.KazinoGames.start = () => {
   bj.dbl.onclick = bjDouble;
 
   /* ---------- slots ---------- */
-  const SYM = [["🍒", 30], ["🍋", 25], ["🔔", 20], ["⭐", 12], ["💎", 8], ["👑", 5]];
-  const THREE = { "🍒": 5, "🍋": 10, "🔔": 15, "⭐": 30, "💎": 75, "👑": 200 };
+  // 絵柄ごとの設定。weight = リールに出やすさ（大きいほど出やすい）、
+  // three = 3つそろったときの倍率、two = 2つそろったときの倍率（0 なら配当なし）。
+  // 確率と払い戻し率は、この表から自動で計算して画面に出す。
+  const SLOT_SYMBOLS = [
+    { s: "🍒", name: "チェリー", weight: 32, three: 5, two: 1 },
+    { s: "🍋", name: "レモン", weight: 26, three: 10, two: 0 },
+    { s: "🔔", name: "ベル", weight: 18, three: 25, two: 0 },
+    { s: "⭐", name: "スター", weight: 12, three: 60, two: 0 },
+    { s: "💎", name: "ダイヤ", weight: 8, three: 150, two: 0 },
+    { s: "👑", name: "クラウン", weight: 4, three: 1000, two: 5 },
+  ];
+  const SLOT_TOTAL = SLOT_SYMBOLS.reduce((a, x) => a + x.weight, 0);
+  const SYM = SLOT_SYMBOLS.map(x => [x.s, x.weight]);
+  const bySymbol = Object.fromEntries(SLOT_SYMBOLS.map(x => [x.s, x]));
   const reels = [...document.querySelectorAll(".reel")];
   const slMsg = $("#sl-msg"), slBtn = $("#sl-spin"), slBar = makeBetBar($("#sl-bet"));
-  $("#sl-pay").innerHTML = Object.entries(THREE).map(([s, m]) => `<tr data-k="${s}"><td>${s}${s}${s}</td><td>×${m}</td></tr>`).join("")
-    + `<tr data-k="cherry2"><td>🍒が2つ</td><td>×2</td></tr>`;
+
+  // 配当表（そろい方ごとの確率つき）
+  const oneIn = p => `1/${Math.round(1 / p).toLocaleString("ja-JP")}`;
+  const slotRows = [];
+  let slotRtp = 0;
+  for (const x of SLOT_SYMBOLS) {
+    const p = x.weight / SLOT_TOTAL;
+    const p3 = p ** 3, p2 = 3 * p * p * (1 - p);
+    slotRows.push({ key: x.s + "3", label: `${x.s}${x.s}${x.s}`, mult: x.three, p: p3 });
+    slotRtp += p3 * x.three;
+    if (x.two) {
+      slotRows.push({ key: x.s + "2", label: `${x.s}${x.s} が2つ`, mult: x.two, p: p2 });
+      slotRtp += p2 * x.two;
+    }
+  }
+  slotRows.sort((a, b) => b.mult - a.mult);
+  $("#sl-pay").innerHTML = `<thead><tr><th>そろい方</th><th>確率</th><th>配当</th></tr></thead><tbody>`
+    + slotRows.map(r => `<tr data-k="${r.key}"><td>${r.label}</td><td class="prob">${oneIn(r.p)}</td><td>×${r.mult.toLocaleString("ja-JP")}</td></tr>`).join("")
+    + `</tbody><tfoot><tr><td colspan="3">払い戻し率 約${Math.round(slotRtp * 100)}%（長く遊ぶと、賭けたチップのうち平均でこれだけ戻ります）</td></tr></tfoot>`;
+
   function pick() {
-    let x = Math.random() * 100;
+    let x = Math.random() * SLOT_TOTAL;
     for (const [s, w] of SYM) if ((x -= w) < 0) return s;
     return SYM[0][0];
   }
+  // [倍率, 配当表のキー, そろった絵柄]
   function slotMult(r) {
-    if (r[0] === r[1] && r[1] === r[2]) return [THREE[r[0]], r[0]];
-    if (r.filter(s => s === "🍒").length === 2) return [2, "cherry2"];
-    return [0, null];
+    if (r[0] === r[1] && r[1] === r[2]) return [bySymbol[r[0]].three, r[0] + "3", r[0]];
+    for (const s of new Set(r)) {
+      if (r.filter(x => x === s).length === 2 && bySymbol[s].two) return [bySymbol[s].two, s + "2", s];
+    }
+    return [0, null, null];
   }
   slBtn.onclick = async () => {
     const bet = slBar.bet;
@@ -240,15 +274,16 @@ window.KazinoGames.start = () => {
       reels[i].classList.remove("spinning");
       reels[i].firstElementChild.textContent = res[i];
     }
-    const [mult, key] = slotMult(res);
+    const [mult, key, sym] = slotMult(res);
     const payout = bet * mult;
     pay(payout);
     if (mult) {
-      reels.forEach((r, i) => { if (key !== "cherry2" || res[i] === "🍒") r.classList.add("win"); });
+      reels.forEach((r, i) => { if (res[i] === sym) r.classList.add("win"); });
       $(`#sl-pay tr[data-k="${key}"]`).classList.add("hit");
     }
     const [t, k] = resultText(bet, payout);
-    say(slMsg, mult ? `×${mult}！ ${t}` : t, k);
+    const head = !mult ? "" : sym === "👑" && mult >= 1000 ? "ジャックポット！！ " : `${bySymbol[sym].name} ×${mult}！ `;
+    say(slMsg, head + t, k);
     slBtn.disabled = false; slBar.lock(false);
   };
 

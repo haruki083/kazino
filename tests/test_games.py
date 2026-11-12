@@ -67,15 +67,26 @@ class BlackjackTest(unittest.TestCase):
 
 class SlotsTest(unittest.TestCase):
     def test_payouts(self):
-        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 200)
-        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 2)
+        self.assertEqual(slots.payout_multiplier(["👑", "👑", "👑"]), 1000)
+        self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍒"]), 1)
+        self.assertEqual(slots.payout_multiplier(["👑", "👑", "🍋"]), 5)
+        self.assertEqual(slots.payout_multiplier(["🔔", "🔔", "🍋"]), 0)
         self.assertEqual(slots.payout_multiplier(["🍒", "🔔", "🍋"]), 0)
+
+    def test_rarer_symbols_pay_more(self):
+        rows = [(w, three) for _, _, w, three, _ in slots.SYMBOLS]
+        for (w1, t1), (w2, t2) in zip(rows, rows[1:]):
+            self.assertGreater(w1, w2)
+            self.assertLess(t1, t2)
+
+    def test_return_rate(self):
+        self.assertAlmostEqual(slots.return_rate(), 0.9618, places=3)
 
     def test_house_edge(self):
         rng = random.Random(42)
-        n = 100_000
+        n = 200_000
         rtp = sum(slots.payout_multiplier(slots.spin(rng)) for _ in range(n)) / n
-        self.assertTrue(0.8 < rtp < 1.0, rtp)
+        self.assertTrue(0.85 < rtp < 1.05, rtp)
 
 
 class RouletteTest(unittest.TestCase):

@@ -221,7 +221,7 @@ body {
 .crumb a { color: var(--bulb); font-weight: 700; text-decoration: none; }
 .crumb span { font-family: var(--display); color: var(--ivory); }
 .floor-main { max-width: 932px; margin: 0 auto; padding-block: 18px 0; display: grid; gap: 24px; }
-.foot { text-align: center; font-size: 12px; color: var(--mist); margin: 30px auto 0; width: fit-content; max-width: 100%; background: rgba(18, 10, 36, .85); border-radius: 999px; padding-block: 4px; }
+.foot { display: block; text-align: center; font-size: 12px; color: var(--mist); margin: 30px auto 0; width: fit-content; max-width: calc(100% - 32px); background: rgba(18, 10, 36, .85); border-radius: 999px; padding-block: 4px; }
 
 .lobby { display: grid; gap: 22px; }
 .lobby-hero {
@@ -285,7 +285,7 @@ body {
   position: relative;
   border-radius: 30px;
   padding: 26px clamp(14px, 4vw, 30px) 24px;
-  background: rgba(0,0,0,.1);
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, var(--felt) 0%, var(--felt-deep) 85%);
   box-shadow: 0 0 0 10px var(--rail), 0 0 0 12px var(--rail-edge), 0 18px 40px rgba(0,0,0,.45), inset 0 2px 34px rgba(0,0,0,.3);
   margin: 12px 0;
   display: grid;
@@ -354,8 +354,12 @@ body {
 .paytable { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; min-width: 220px; }
 .paytable td { padding: 3px 12px; border-bottom: 1px solid var(--felt-line); }
 .paytable td:last-child { font-family: var(--mono); text-align: right; color: var(--brass); }
+.paytable th { font-size: 12px; font-weight: 700; color: var(--mist); text-align: left; padding: 3px 12px; border-bottom: 1px solid var(--felt-line); }
+.paytable th:not(:first-child) { text-align: right; }
+.paytable td.prob { font-family: var(--mono); text-align: right; color: var(--mist); font-size: 13px; }
+.paytable tfoot td, .paytable tfoot td:last-child { font-family: var(--body); font-size: 12px; color: var(--mist); text-align: center; border-bottom: 0; padding-top: 8px; }
 .paytable tr.hit td { background: var(--brass); color: var(--ink); }
-.paytable tr.hit td:last-child { color: var(--ink); }
+.paytable tr.hit td:last-child, .paytable tr.hit td.prob { color: var(--ink); }
 
 /* roulette */
 .rl-top { display: flex; gap: 24px; align-items: center; justify-content: center; flex-wrap: wrap; }
@@ -396,7 +400,6 @@ body {
 details.rules { font-size: 14px; color: var(--mist); max-width: 62ch; margin: 0 auto; }
 details.rules summary { cursor: pointer; text-align: center; }
 details.rules p { margin: 8px 0 0; }
-.foot { text-align: center; font-size: 12px; color: var(--mist); margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .card, .reel.spinning span { animation: none; }
