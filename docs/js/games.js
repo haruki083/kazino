@@ -227,6 +227,7 @@ window.KazinoGames.start = () => {
     { s: "⭐", count: 3, chance: 0.2, mult: 600 },
     { s: "👑", count: 2, chance: 0.4, mult: 400 },
     { s: "🔔", count: 3, chance: 0.5, mult: 250 },
+    { s: "🔔", count: 2, chance: 10, mult: 25 },
     { s: "🍋", count: 3, chance: 1.8, mult: 100 },
     { s: "🍒", count: 3, chance: 15, mult: 50 },
     { s: "🍒", count: 2, chance: 25, mult: 10 },
