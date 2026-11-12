@@ -2,7 +2,13 @@
 
 ターミナルで遊べるカジノゲーム集です。Python だけで動き、追加のライブラリは要りません。
 
-## 遊び方
+## Web版
+
+`docs/index.html` をブラウザで開くだけで遊べます（ファイル1つで動きます）。チップはブラウザに保存されます。
+
+GitHub Pages で公開するには、リポジトリの Settings → Pages → Build and deployment で「Deploy from a branch」を選び、ブランチと `/docs` フォルダを指定します。
+
+## ターミナル版の遊び方
 
 Python 3.10 以上が必要です。
 
@@ -26,7 +32,8 @@ python main.py
 ## フォルダ構成
 
 ```
-main.py            メニュー（起動ファイル）
+docs/index.html    Web版（ブラウザで開く）
+main.py            ターミナル版のメニュー（起動ファイル）
 casino/
   wallet.py        チップの管理とセーブ
   ui.py            入力・表示の共通処理
