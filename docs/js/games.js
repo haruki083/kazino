@@ -217,7 +217,7 @@ window.KazinoGames.start = () => {
     { s: "🔔", name: "ベル", weight: 18, three: 25, two: 0 },
     { s: "⭐", name: "スター", weight: 12, three: 60, two: 0 },
     { s: "💎", name: "ダイヤ", weight: 8, three: 150, two: 0 },
-    { s: "👑", name: "クラウン", weight: 4, three: 1000, two: 5 },
+    { s: "👑", name: "クラウン", weight: 4, three: 1000, two: 50 },
   ];
   const SLOT_TOTAL = SLOT_SYMBOLS.reduce((a, x) => a + x.weight, 0);
   const SYM = SLOT_SYMBOLS.map(x => [x.s, x.weight]);

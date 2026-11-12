@@ -16,7 +16,7 @@ SYMBOLS = [
     ("🔔", "ベル", 18, 25, 0),
     ("⭐", "スター", 12, 60, 0),
     ("💎", "ダイヤ", 8, 150, 0),
-    ("👑", "クラウン", 4, 1000, 5),
+    ("👑", "クラウン", 4, 1000, 50),
 ]
 THREE_OF_A_KIND = {s: three for s, _, _, three, _ in SYMBOLS}
 TWO_OF_A_KIND = {s: two for s, _, _, _, two in SYMBOLS if two}
