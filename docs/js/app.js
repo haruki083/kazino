@@ -11,11 +11,14 @@
   const GAMES = ["blackjack", "slots", "roulette", "poker"];
   const VIEWS = ["lobby", "ranking", ...GAMES];
   const START = 1000, DAILY_BONUS = 500, MIN_BET = 10;
+  // 会員ランク: [この枚数以上, 名前, CSSクラス]。いま持っているチップで決まる（上から順に判定）
   const TIERS = [
-    [20000, "プラチナ", "platinum"],
-    [5000, "ゴールド", "gold"],
-    [2000, "シルバー", "silver"],
-    [0, "ブロンズ", "bronze"],
+    [5000000, "ブラック", "black"],
+    [1000000, "プラチナ", "platinum"],
+    [500000, "ゴールド", "gold"],
+    [100000, "シルバー", "silver"],
+    [10000, "ブロンズ", "bronze"],
+    [0, "ノーマル", "normal"],
   ];
   const tierOf = b => TIERS.find(t => b >= t[0]);
 

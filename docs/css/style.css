@@ -159,9 +159,13 @@ body {
   box-shadow: 0 12px 28px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .5);
 }
 .mcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .28) 45%, transparent 60%); pointer-events: none; }
+.mcard.t-normal { --c1: #3f6e8c; --c2: #1d3446; --c3: #8fb8d1; }
+.mcard.t-bronze { --c1: #b07b4a; --c2: #6e4423; --c3: #e3b483; }
 .mcard.t-silver { --c1: #9aa3ad; --c2: #4e5660; --c3: #e6ebf0; }
 .mcard.t-gold { --c1: #d4a033; --c2: #7d5612; --c3: #ffe9a6; }
 .mcard.t-platinum { --c1: #5e6b7c; --c2: #1d2430; --c3: #c9d6e6; }
+.mcard.t-black { --c1: #1c1c1f; --c2: #050506; --c3: #3a3a40; color: var(--bulb); box-shadow: 0 12px 28px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(226, 182, 92, .55); }
+.mcard.t-black .mcard-chip { background: linear-gradient(135deg, #f6e3a5, #8f6a22); }
 .mcard-top { display: flex; justify-content: space-between; align-items: baseline; }
 .mcard-brand { font-family: var(--sign); font-size: 22px; letter-spacing: .06em; }
 .mcard-tier { font-size: 12px; font-weight: 700; letter-spacing: .2em; background: rgba(0, 0, 0, .25); padding: 1px 10px; border-radius: 999px; }
@@ -171,9 +175,12 @@ body {
 .mcard-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .mcard-club { position: absolute; right: 18px; top: 44%; margin: 0; font-size: 8px; letter-spacing: .25em; opacity: .7; }
 .tier-badge { font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 1px 8px; border-radius: 999px; color: var(--ink); background: #d29a64; white-space: nowrap; }
+.tier-badge.t-normal { background: #9cc3db; }
+.tier-badge.t-bronze { background: #d29a64; }
 .tier-badge.t-silver { background: #cfd6de; }
 .tier-badge.t-gold { background: #f0c75a; }
 .tier-badge.t-platinum { background: #b9c8dc; }
+.tier-badge.t-black { background: #111; color: var(--bulb); box-shadow: inset 0 0 0 1px var(--brass); }
 
 /* ---------- doors ---------- */
 .doors { position: fixed; inset: 0; z-index: 50; display: flex; pointer-events: none; animation: doorsIn .4s ease-out both; }
